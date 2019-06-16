@@ -6,6 +6,9 @@ To use MiniVnet, you need to import
 > from miniVnet import MINIVNET
 
 ## Manual for MiniVnet
+### **Compilation is needed after setting up the network**
+> compile()
+
 ### Setup the network
 1. **Add an intersection**  
     `name` is the ID of the intersection. `num_lane` is the number of lanes in each direction.  
