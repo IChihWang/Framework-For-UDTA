@@ -22,4 +22,8 @@ To use MiniVnet, you need to import
     For intersections, the index can be {0..3}.
     > connect(component_1, idx_1, component_2, idx_2)
     
+1. Create grid network
+    Create grid network with given `N` and the number of lane `num_lane`. (compiled automatically)
+    > createGridNetwork(N, num_lane)
+    
 ### Run the network
