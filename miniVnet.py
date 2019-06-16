@@ -119,6 +119,46 @@ class MINIVNET:
         component_2.connect(idx_2, new_road)
         
         
+    def createGridNetwork(self, N, num_lane):
+        intersections = [[self.addIntersection('I'+str(i)+'_'+str(j), num_lane) for j in range(N)] for i in range(N)]
+        
+        sinks = [[self.addSink('S'+str(i)+'_'+str(j), num_lane) for j in range(N)] for i in range(4)]
+        
+        # Connect intersections
+        for i_row in range(N):
+            for i_col in range(1, N):
+                component_1 = intersections[i_row][i_col-1]
+                component_2 = intersections[i_row][i_col]
+                self.connect(component_1, 2, component_2, 0)
+        for i_col in range(N):
+            for i_row in range(1, N):
+                component_1 = intersections[i_row-1][i_col]
+                component_2 = intersections[i_row][i_col]
+                self.connect(component_1, 3, component_2, 1)
+                
+        # Connect sinks
+        for i_idx in range(N):
+            target_sink = sinks[0][i_idx]
+            target_intersection = intersections[0][i_idx]
+            self.connect(target_sink, 0, target_intersection, 1)
+            
+            target_sink = sinks[1][i_idx]
+            target_intersection = intersections[i_idx][N-1]
+            self.connect(target_sink, 0, target_intersection, 2)
+            
+            target_sink = sinks[2][i_idx]
+            target_intersection = intersections[N-1][N-1-i_idx]
+            self.connect(target_sink, 0, target_intersection, 3)
+            
+            target_sink = sinks[3][i_idx]
+            target_intersection = intersections[N-1-i_idx][0]
+            self.connect(target_sink, 0, target_intersection, 0)
+    
+        self.compile()
+        
+        return self
+        
+        
     def compile(self):
         self.is_compiled = True
         
