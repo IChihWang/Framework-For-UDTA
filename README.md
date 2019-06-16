@@ -6,7 +6,7 @@ To use MiniVnet, you need to import
 > from miniVnet import MINIVNET
 
 ## Manual for MiniVnet
-### **Compilation is needed after setting up the network**
+### Compilation is needed after setting up the network
 > compile()
 
 ### Setup the network
