@@ -50,4 +50,6 @@ if __name__ == '__main__':
     my_net.connect(i4, 3, s5, 0)
     
     my_net.compile()
+
+    
     

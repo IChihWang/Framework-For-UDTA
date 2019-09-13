@@ -11,7 +11,7 @@ class INTERSECTION:
         for i in range(4):
             for j in range(num_lane):
                 for k in range(3):  # left, straight, right
-                    source_node = self.direction_nodes[i][0][j]
+                    source_node = self.direction_nodes[i][0][j]   
                     new_link = LINK()
                     source_node.out_links.append(new_link)
                     new_link.in_node = source_node
@@ -57,10 +57,10 @@ class ROAD:
                 self.link_groups[1][i].in_node = in_nodes[i]
                 self.link_groups[0][i].out_node = out_nodes[i]
                 
-    def checkSetting(self):
-        component_list = [component for component in self.components if component != None]
+    # def checkSetting(self):
+    #    component_list = [component for component in self.components if component != None]
         
-        assert len(component_list) == 2, "Error: Road " + str(self.name) + " has too few connections."
+    #  assert len(component_list) == 2, "Error: Road " + str(self.name) + " has too few connections."
 
 
 class SINK:
