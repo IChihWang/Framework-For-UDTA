@@ -3,15 +3,11 @@ from miniVnet import MINIVNET
 inf = float('inf')
 
 my_net = MINIVNET()
-for sink in my_net.sinks:
-    for node in sink.node_groups:
-        print(node)
-graph = {node}
 
 def dijkstra(my_net,start,goal):
     shortest_distance = {}
     predecessor = {}
-    unseenNodes = my_net.sinks
+    unseenNodes = graph
     infinity = inf
     path = []
     for node in unseenNodes:
@@ -47,4 +43,4 @@ def dijkstra(my_net,start,goal):
         print('And the path is ' + str(path))
 
 
-dijkstra(graph, 'a', 'b')
+dijkstra(graph, '', 'b')

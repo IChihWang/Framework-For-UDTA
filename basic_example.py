@@ -57,10 +57,9 @@ for sink in my_net.sinks:
         num_node = len(group)
         for i in range(num_node):
             node = group.pop()
-            if node.is_activated == True:
-                print(node)
-        #print(node.pop())
-#        vertex.append(node)
+            #if node.is_activated == True:
+            print(node.out_links)
+
 for road in my_net.roads:
     for link in road.link_groups:
         
