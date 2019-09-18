@@ -56,11 +56,11 @@ class ROAD:
             for i in range(self.num_lane):
                 self.link_groups[1][i].in_node = in_nodes[i]
                 self.link_groups[0][i].out_node = out_nodes[i]
-                
-    # def checkSetting(self):
-    #    component_list = [component for component in self.components if component != None]
-        
-    #  assert len(component_list) == 2, "Error: Road " + str(self.name) + " has too few connections."
+
+#    def checkSetting(self):
+#        component_list = [component for component in self.components if component != None]
+#        
+#      assert len(component_list) == 2, "Error: Road " + str(self.name) + " has too few connections."
 
 
 class SINK:
@@ -163,8 +163,4 @@ class MINIVNET:
         self.is_compiled = True
         
     
-    # ================ Run the network ====================
-
-
-
-
+    # ================ Run the network ===================

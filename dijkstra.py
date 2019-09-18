@@ -18,7 +18,7 @@ def neighbours(self):
     return neighbours
 
 
-def dijkstra(self, source, dest):
+def dijkstra(n, source, dest):
     
     assert source in self.node_groups, 'Such source node doesn\'t exist'
 
