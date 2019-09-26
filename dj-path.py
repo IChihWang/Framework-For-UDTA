@@ -2,19 +2,22 @@ graph = {'a':{'b':10,'c':3},'b':{'c':1,'d':2},'c':{'b':4,'d':8,'e':2},'d':{'e':7
 from miniVnet import MINIVNET
 inf = float('inf')
 
-my_net = MINIVNET()
-
+my_net = graph
+#my_net = MINIVNET()
 def dijkstra(my_net,start,goal):
     shortest_distance = {}
     predecessor = {}
     unseenNodes = graph
     infinity = inf
     path = []
+    # set every node to be inf. Except the start node= 0
     for node in unseenNodes:
         shortest_distance[node] = infinity
     shortest_distance[start] = 0
 
+    # algorithm. Check the dictionary is empty or note
     while unseenNodes:
+        # Greedy. Loeset node for this
         minNode = None
         for node in unseenNodes:
             if minNode is None:
@@ -43,4 +46,4 @@ def dijkstra(my_net,start,goal):
         print('And the path is ' + str(path))
 
 
-dijkstra(graph, '', 'b')
+dijkstra(graph, 'a', 'b')

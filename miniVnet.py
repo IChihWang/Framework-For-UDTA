@@ -34,6 +34,10 @@ class INTERSECTION:
         component_list = [component for component in self.components if component != None]
         
         assert len(component_list) > 2, "Error: intersection " + str(self.name) + " has too few connections."
+    
+    def debug(self):
+        print (self.name, self.num_lane, self.components)
+        
             
 
 
@@ -89,6 +93,8 @@ class MINIVNET:
         self.intersections = []
         self.roads = []
         self.sinks = []
+        self.dgraph = {}
+
     
     
     # ================ Setup the network ====================
@@ -117,7 +123,100 @@ class MINIVNET:
         self.roads.append(new_road)
         component_1.connect(idx_1, new_road)
         component_2.connect(idx_2, new_road)
+    
+    
+    def debug(self):
+        #for i in range(len(self.roads)):
+        #    graph_road = self.roads[i]
+            #print(i,graph_road)
+        #    linkg = graph_road.link_groups[0]
+            #print(i,linkg[0].in_node)
+            #for j in range(len(graph_road.link_groups)):
+             #   linkg = graph_road[0].link_groups[j]
+             #   print(j,linkg)
+                #for k in range(len(linkg)):
+                    #link = linkg[k]
+                    #out_node = link.out_node
+                  #  print(,j,k,link.out_node,'\n')
+            #print(i,graph_road.link_groups,'\n')
+
+        # for i in range(len(self.sinks)):
+        #     sink = self.sinks[i]
+        #     self.dgraph[sink] = {}
+        #     for j in range(len(sink.node_groups)):
+        #         nodes = sink.node_groups[j]
+        #         for jj in range(len(nodes)):
+        #             print(nodes[jj])
         
+        for i in range(len(self.roads)):
+            graph_road = self.roads[i]
+            linkg = graph_road.link_groups
+            for j in range(2):
+                for link in linkg[j]:
+                    print(link.in_node)
+        
+    def dijkstraGraph(self):
+        # for k in range(len(self.roads)):
+        #     graph_road = self.roads[k]
+        #     linkg = graph_road.link_groups
+        #     for l in range(2):
+        #         # Search through every link
+        #         for link in linkg[l]:
+        #         # In the same Sink
+        #             for i in range(len(self.sinks)):
+        #                 sink = self.sinks[i]
+        #                 self.dgraph[sink] = {}
+        #                 for j in range(len(sink.node_groups)):
+        #                     snodes = sink.node_groups[j]
+        #                     for jj in range(len(snodes)):
+        #                         snode = snodes[jj]
+        #                         if link.in_node is snode:
+        #                             self.dgraph[sink][link.out_node] = link.cost
+
+        #         # In the same Intersection
+        #             for i in range(len(self.intersections)):
+        #                 intersection = self.intersections[i]
+        #                 self.dgraph[intersection] = {}
+        #                 for j in range(len(intersection.direction_nodes)):
+        #                     inodes = intersection.direction_nodes[j]
+        #                     for jj in range(len(inodes)):
+        #                         inode = inodes[jj]
+        #                         if link.in_node is inode:
+        #                             self.dgraph[intersection][link.out_node] = link.cost
+
+        sink_node_list = []                    
+        for i in range(len(self.sinks)):
+            sink = self.sinks[i]
+            self.dgraph[sink] = {}
+            for j in range(len(sink.node_groups)):
+                nodes = sink.node_groups[j]
+                for jj in range(len(nodes)):
+                    node = nodes[jj]       
+                    for k in range(len(self.roads)):
+                        graph_road = self.roads[k]
+                        linkg = graph_road.link_groups
+                        for l in range(2):
+                            for link in linkg[l]:
+                                if link.in_node is node:                                    
+                                    self.dgraph[sink][link.out_node] = link.cost
+                                    sink_node_list.append(node)
+        #print(sink_node_list)
+
+
+        for i in range(len(self.roads)):
+            graph_road = self.roads[i]
+            linkg = graph_road.link_groups
+            for j in range(2):
+                for link in linkg[j]:
+                    self.dgraph[link.in_node] = {}
+                    for k in range(len(sink_node_list)):
+                        if link.in_node is not sink_node_list[k]:
+                            self.dgraph[link.in_node][link.out_node] = link.cost
+                                    
+
+        return self.dgraph
+
+
         
     def createGridNetwork(self, N, num_lane):
         intersections = [[self.addIntersection('I'+str(i)+'_'+str(j), num_lane) for j in range(N)] for i in range(N)]

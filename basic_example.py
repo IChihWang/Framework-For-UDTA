@@ -50,20 +50,29 @@ if __name__ == '__main__':
     my_net.connect(i4, 3, s5, 0)
     
     my_net.compile()
-vertex = []
-edge = []
-for sink in my_net.sinks:
-    for group in sink.node_groups:
-        num_node = len(group)
-        for i in range(num_node):
-            node = group.pop()
-            #if node.is_activated == True:
-            print(node.out_links)
 
-for road in my_net.roads:
-    for link in road.link_groups:
+
+graph = my_net.dijkstraGraph()
+print(graph)
+
+
+#my_net.debug()
+#print(len(i1.direction_nodes))
+#print(len(my_net.roads))
+#vertex = []
+#edge = []
+#for sink in my_net.sinks:
+#    for group in sink.node_groups:
+ #       num_node = len(group)
+ #       for i in range(num_node):
+ #           node = group.pop()
+            #if node.is_activated == True:
+        #    print(node.out_links)
+
+#for road in my_net.roads:
+#    for link in road.link_groups:
         
-        edge.append(link)
+#        edge.append(link)
 
 #print(vertex)
 #print(edge)
