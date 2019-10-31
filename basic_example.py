@@ -52,27 +52,17 @@ if __name__ == '__main__':
     my_net.compile()
 
 
-graph = my_net.dijkstraGraph()
-print(graph)
 
+#a = {i:int(np.random.randint(10, size=1)) for i in range(10)}
 
 #my_net.debug()
-#print(len(i1.direction_nodes))
-#print(len(my_net.roads))
-#vertex = []
-#edge = []
-#for sink in my_net.sinks:
-#    for group in sink.node_groups:
- #       num_node = len(group)
- #       for i in range(num_node):
- #           node = group.pop()
-            #if node.is_activated == True:
-        #    print(node.out_links)
+graph = my_net.dijkstraGraph()
+#print(graph)
+p1 = my_net.newdijkstra(0,2)
+#p2 = my_net.dijkstra(graph,0,2)
+#p3 = my_net.dijkstra(graph,0,3)
+#p4 = my_net.dijkstra(graph,2,1)
+#p5 = my_net.dijkstra(graph,3,2)
 
-#for road in my_net.roads:
-#    for link in road.link_groups:
-        
-#        edge.append(link)
-
-#print(vertex)
-#print(edge)
+#my_net.countCar(graph,p1)
+#print(graph['SINK S2'])
