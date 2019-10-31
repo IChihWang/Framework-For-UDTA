@@ -391,15 +391,15 @@ class MINIVNET:
             try:
                 self.path.insert(0,currentNode)
                 currentNode = from_node[currentNode]
-                print_time_list.append(car_timestamp[currentNode])
+                self.print_time_list.append(car_timestamp[currentNode])
             except KeyError:
                 print('Path not reachable')
                 break
         self.path.insert(0,start)
         if shortest_distance[goal] != infinity:
             print('And the path is ' + str(self.path))
-        self.print_time_list = print_time_list[::-1]
-        print(slef.print_time_list)
+        self.print_time_list = self.print_time_list[::-1]
+        print(self.print_time_list)
         return self.path, self.print_time_list
 
     #======================= UPDATE The Intersection Part ===============================#
