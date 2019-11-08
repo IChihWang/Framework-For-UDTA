@@ -229,7 +229,7 @@ class MINIVNET:
             #    for link in linkg[j]:
             #        print(link.in_node)
                         
-    # Transfer the network graph into 
+    # Transfer the network graph into dictionary and do the routing
     def dijkstraGraph(self):
         for graph_intersection in self.intersections:
             # Add link inside Intersections
@@ -276,8 +276,6 @@ class MINIVNET:
                                 #     self.dgraph[link.in_node][link.out_node] = link.cost
 
         return self.dgraph
-    
-    # Modified Dijkstra's Algorithm
     def dijkstra(self,s1,s2):
         graph = self.dijkstraGraph()        
         start = self.sinks[s1]
@@ -336,7 +334,8 @@ class MINIVNET:
         #         printtimelist[i] = timelist[i]     
         # print(printtimelist)
         return self.path
-
+    
+    ####### Use the Dictionary DataStructure to Routing ######
     def newdijkstra(self,s1,s2):
         graph = self.dijkstraGraph()
         start = self.sinks[s1]
@@ -348,7 +347,7 @@ class MINIVNET:
         self.path = []
         self.print_time_list = []
         time = 0
-        from_node = {}
+        self.from_node = {}
         car_timestamp = {}
         # set every node to be inf. Except the start node= 0
         for node in unseenNodes:
@@ -369,14 +368,14 @@ class MINIVNET:
                     shortest_distance[childNode] = next_time
                     childNode.setValue(next_time)
                     node_list.append(childNode)
-                    from_node[childNode] = minNode
+                    self.from_node[childNode] = minNode
             car_timestamp[minNode] = time
         # Record the path
         currentNode = goal
         while currentNode != start:
             try:
                 self.path.insert(0,currentNode)
-                currentNode = from_node[currentNode]
+                currentNode = self.from_node[currentNode]
                 self.print_time_list.append(car_timestamp[currentNode])
             except KeyError:
                 print('Path not reachable')
@@ -397,6 +396,18 @@ class MINIVNET:
                 for j in range(graph_intersection.num_lane):
                     for k in range(3):
                         graph_intersection.new_link[i][j][k].in_node.out_links.append(graph_intersection.new_link[i][j][k])
+        
+            for j in range(len(graph_intersection.direction_nodes)):
+                    inodes = graph_intersection.direction_nodes[j]
+                    for jj in range(len(inodes)):
+                        inode = inodes[jj]
+                        for insec_node in inode:
+                            for graph_road in self.roads:
+                                linkg = graph_road.link_groups
+                                for l in range(2):
+                                    for link in linkg[l]:         
+                                        if link.in_node is insec_node:
+                                            link.in_node.out_links.append(link)
     def appendLinktoSink(self):
         for sink in self.sinks:
             sink_nodes = self.sink_node(sink)
@@ -411,6 +422,7 @@ class MINIVNET:
                             elif link.out_node is sink_node:
                                 link.in_node.out_links.append(link)
                                 sink_node.in_links.append(link)
+    
     ###### Use the DataStructure to routing (Newest version)#####                    
     def nnewdijkstra(self,s1,s2):
         self.appendLinktoSink()
@@ -420,19 +432,19 @@ class MINIVNET:
         print('Routing the path goes from {} to {}'.format(start,goal)) 
         self.path = []
         self.print_time_list = []
-        from_node = {}
+        self.from_node = {}
         car_timestamp = {}
         # set every node to be inf. Except the start node= 0
         start_nodes = self.sink_node(start)
         for node in start_nodes:
             node.setValue(0)
-        node_list = []
+        self.node_list = []
         for snode in start_nodes:
-            node_list.append(snode)
+            self.node_list.append(snode)
         # algorithm. Check the dictionary is empty or note
-        while node_list:
+        while self.node_list:
             # Greedy. Loeset node for this
-            node = node_list.pop()
+            node = self.node_list.pop()
             time = node.value
             for out_edge in node.out_links:
                 out_node = self.getNode(out_edge)
@@ -441,28 +453,45 @@ class MINIVNET:
                 next_time = node.value + out_edge.cost[time]
                 if next_time < out_node.value:
                     out_node.setValue(next_time)
-                    node_list.append(out_node)
-                    from_node[out_node] = node
-            car_timestamp[node] = time
+                    self.node_list.append(out_node)
+                    self.from_node[out_node] = node
+            car_timestamp[node] = node.value
         # Record the path
         goal_nodes = self.sink_node(goal)
         self.path = []
         self.path_node_list = []
         for gnode in goal_nodes:
-            if gnode in from_node:
+            if gnode in self.from_node:
                 self.path_node_list.append(gnode)
                 while self.path_node_list:
                     try:
                         path_node = self.path_node_list.pop()
                         self.path.insert(0, path_node)
-                        self.path_node_list.append(from_node[path_node])
+                        self.path_node_list.append(self.from_node[path_node])
                     except KeyError:
                         break
-        print(self.path)
-        return self.path, path_node
+        for node in self.path:
+            self.print_time_list.append(car_timestamp[node])
+        minTime = self.print_time_list[-1]
+        t = len(self.print_time_list)
+        for x in range(len(self.print_time_list) - 1):
+            if (self.print_time_list[x+1] == 0) & (self.print_time_list[x] <= minTime) :
+                minTime = self.print_time_list[x]
+                t = x
+        printingtime = []
+        printinglist = []
+        while self.print_time_list[t-1] != 0:
+            printinglist.insert(0, self.path[t-1])
+            printingtime.insert(0, self.print_time_list[t-1])
+            t = t - 1
+        printinglist.insert(0,self.path[t-1])
+        printingtime.insert(0, self.print_time_list[t-1])
+ 
+        print('The path is ' + str(printinglist))
+        print(printingtime)
+        return self.path, self.print_time_list
         #     self.path.insert(0,start)
         #     if goal_node.value != infinity:
-        #         print('And the path is ' + str(self.path))
         #     self.print_time_list = self.print_time_list[::-1]
         #     print(self.print_time_list)
         # return self.path, self.print_time_list
