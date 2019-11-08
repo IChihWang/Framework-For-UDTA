@@ -63,6 +63,7 @@ class ROAD:
         self.link_groups = [[LINK() for j in range(num_lane)] for i in range(2)]
         self.components = [None for i in range(2)]
         
+        
     def connect(self, component, in_nodes, out_nodes):
         assert self.components[0] == None or self.components[1] == None, "A road is overly assigned"
         
@@ -91,6 +92,8 @@ class SINK:
         self.node_groups = [[NODE() for i in range(num_lane)] for i in range(2)]
         self.components = None
         self.id = next(SINK.newid)
+        self.value = 0
+        
 
     def connect(self, index, road):
         assert self.components == None, "The sink is already connected, sink: " + str(self.name)
@@ -100,6 +103,8 @@ class SINK:
         self.components = road
                     
         road.connect(self, self.node_groups[0], self.node_groups[1])
+    def setValue(self, value):
+        self.value = value
 
     def __repr__(self):
         return '{} {}'.format(self.__class__.__name__, self.name)
@@ -116,6 +121,7 @@ class MINIVNET:
         self.roads = []
         self.sinks = []
         self.dgraph = {}
+        self.intersection_node = []
 
     
     
@@ -222,26 +228,7 @@ class MINIVNET:
             #for j in range(2):
             #    for link in linkg[j]:
             #        print(link.in_node)
-    # Next task
-    def node_to_intersetion(self,node):
-        for intersection in self.intersections:
-            for j in range(len(intersection.direction_nodes)):
-                inodes = intersection.direction_nodes[j]
-                for inode in inodes:
-                    for insec_node in inode:
-                        if node is insec_node:
-                            return intersection
                         
-    # Next task            
-    def sink_node(self,graph_sink):
-        print(graph_sink.node_groups)
-        sink_node = {}
-        for j in range(len(graph_sink.node_groups)):
-            sink_nodes = graph_sink.node_groups[j]
-            for jj in range(len(sink_nodes)):
-                sink_node[graph_sink] = sink_nodes[jj]
-        print(sink_node)
-
     # Transfer the network graph into 
     def dijkstraGraph(self):
         for graph_intersection in self.intersections:
@@ -354,7 +341,7 @@ class MINIVNET:
         graph = self.dijkstraGraph()
         start = self.sinks[s1]
         goal = self.sinks[s2]
-        print('Return the path goes from {} to {}'.format(start,goal))
+        print('Routing the path goes from {} to {}'.format(start,goal))
         shortest_distance = {}
         unseenNodes = graph
         infinity = inf
@@ -363,14 +350,12 @@ class MINIVNET:
         time = 0
         from_node = {}
         car_timestamp = {}
-
         # set every node to be inf. Except the start node= 0
         for node in unseenNodes:
             shortest_distance[node] = infinity
         shortest_distance[start] = 0
         node_list = []
         node_list.append(start)
-        
         # algorithm. Check the dictionary is empty or note
         while node_list:
             # Greedy. Loeset node for this
@@ -382,6 +367,7 @@ class MINIVNET:
                 next_time = shortest_distance[minNode] + weight[time]
                 if next_time < shortest_distance[childNode]:
                     shortest_distance[childNode] = next_time
+                    childNode.setValue(next_time)
                     node_list.append(childNode)
                     from_node[childNode] = minNode
             car_timestamp[minNode] = time
@@ -401,21 +387,152 @@ class MINIVNET:
         self.print_time_list = self.print_time_list[::-1]
         print(self.print_time_list)
         return self.path, self.print_time_list
+    
+    def getNode(self, out_edge):
+        return out_edge.out_node
+    def appendLinktoIntersection(self):
+        for graph_intersection in self.intersections:
+            # Add link inside Intersections
+            for i in range(4):
+                for j in range(graph_intersection.num_lane):
+                    for k in range(3):
+                        graph_intersection.new_link[i][j][k].in_node.out_links.append(graph_intersection.new_link[i][j][k])
+    def appendLinktoSink(self):
+        for sink in self.sinks:
+            sink_nodes = self.sink_node(sink)
+            for sink_node in sink_nodes:
+                for graph_road in self.roads:
+                    linkg = graph_road.link_groups
+                    for l in range(2):
+                        for link in linkg[l]:     
+                            if link.in_node is sink_node:
+                                link.out_node.in_links.append(link)
+                                sink_node.out_links.append(link)
+                            elif link.out_node is sink_node:
+                                link.in_node.out_links.append(link)
+                                sink_node.in_links.append(link)
+    ###### Use the DataStructure to routing (Newest version)#####                    
+    def nnewdijkstra(self,s1,s2):
+        self.appendLinktoSink()
+        self.appendLinktoIntersection()
+        start = self.sinks[s1]
+        goal = self.sinks[s2]
+        print('Routing the path goes from {} to {}'.format(start,goal)) 
+        self.path = []
+        self.print_time_list = []
+        from_node = {}
+        car_timestamp = {}
+        # set every node to be inf. Except the start node= 0
+        start_nodes = self.sink_node(start)
+        for node in start_nodes:
+            node.setValue(0)
+        node_list = []
+        for snode in start_nodes:
+            node_list.append(snode)
+        # algorithm. Check the dictionary is empty or note
+        while node_list:
+            # Greedy. Loeset node for this
+            node = node_list.pop()
+            time = node.value
+            for out_edge in node.out_links:
+                out_node = self.getNode(out_edge)
+                for _ in range(time - 9):
+                    out_edge.cost.append(0)
+                next_time = node.value + out_edge.cost[time]
+                if next_time < out_node.value:
+                    out_node.setValue(next_time)
+                    node_list.append(out_node)
+                    from_node[out_node] = node
+            car_timestamp[node] = time
+        # Record the path
+        goal_nodes = self.sink_node(goal)
+        self.path = []
+        self.path_node_list = []
+        for gnode in goal_nodes:
+            if gnode in from_node:
+                self.path_node_list.append(gnode)
+                while self.path_node_list:
+                    try:
+                        path_node = self.path_node_list.pop()
+                        self.path.insert(0, path_node)
+                        self.path_node_list.append(from_node[path_node])
+                    except KeyError:
+                        break
+        print(self.path)
+        return self.path, path_node
+        #     self.path.insert(0,start)
+        #     if goal_node.value != infinity:
+        #         print('And the path is ' + str(self.path))
+        #     self.print_time_list = self.print_time_list[::-1]
+        #     print(self.print_time_list)
+        # return self.path, self.print_time_list
 
     #======================= UPDATE The Intersection Part ===============================#
     # Need to be done by Nov.7
-    def updateIntersection(self, graph, path):
-        self.time = {}
-        t = 0
-        for i in range(0,len(path),2):
+    
+    # Get the Intersection number from the number of the node number for finding the intersection to update cost value
+    def sink_node(self, sink):    
+        sink_node_list = []
+        for nodes in sink.node_groups: 
+            for sink_node in nodes:
+                sink_node_list.append(sink_node)
+        return sink_node_list
+                
+    def intersetionNodes(self):
+        for intersection in self.intersections:
+            for j in range(len(intersection.direction_nodes)):
+                inodes = intersection.direction_nodes[j]
+                for inode in inodes:
+                    for insec_node in inode:
+                        self.intersection_node.append(insec_node)
+        return self.intersection_node
+    
+    def node_to_intersetion(self, node):
+        for intersection in self.intersections:
+            for j in range(len(intersection.direction_nodes)):
+                inodes = intersection.direction_nodes[j]
+                for inode in inodes:
+                    for insec_node in inode:
+                        if node is insec_node:
+                            return intersection
 
-            try:
-                t += graph[path[i]][path[i+1]]
-                self.time[t] = self.node_to_intersetion(path[i+1])
-            except:
-                t += graph[path[i]]
-                self.time[t] = self.node_to_intersetion(path[i])
-        print(self.time) 
+    def updateIntersection(self, graph, path):
+        intersection_list = self.intersetionNodes()
+        self.timelist = {}
+        for node in path:
+            #print(node.value)
+            if node in intersection_list:
+                self.timelist[node.value]  = self.node_to_intersetion(node)
+        return self.timelist
+
+    def multipleIntCount(self, graph, paths):
+        multipleTimelist = []
+        for path in paths:
+            multipleTimelist.append(self.updateIntersection(graph,path))
+        print(multipleTimelist)
+    
+    ######################## Update LINK Cost ##########################
+    # def LinkUpdate:
+    #     for graph_road in self.roads:
+    #         linkg = graph_road.link_groups
+    #         for l in range(2):
+    #             for link in linkg[l]:         
+    #                 if link.in_node is insec_node:
+    #                     self.dgraph[link.in_node] = {}
+                        
+    
+        # if node is intersecnode for intersecnode in intersection_list:
+        #    pass
+        #  t = 0
+        # for i in range(0,len(path),2):
+
+        #     try:
+        #         t += graph[path[i]][path[i+1]]
+        #         self.time[t] = self.node_to_intersetion(path[i+1])
+        #     except:
+        #         t += graph[path[i]]
+        #         self.time[t] = self.node_to_intersetion(path[i])
+        # print(self.time) 
         #self.time + = 
         
         

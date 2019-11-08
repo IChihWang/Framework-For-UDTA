@@ -58,11 +58,19 @@ if __name__ == '__main__':
 #my_net.debug()
 graph = my_net.dijkstraGraph()
 #print(graph)
-p1 = my_net.newdijkstra(0,2)
-#p2 = my_net.dijkstra(graph,0,2)
-#p3 = my_net.dijkstra(graph,0,3)
-#p4 = my_net.dijkstra(graph,2,1)
-#p5 = my_net.dijkstra(graph,3,2)
+
+p1,t1 = my_net.nnewdijkstra(1,2)
+#my_net.appendLinktoSink()
+#print(p1[1].out_links)
+#p2 = my_net.newdijkstra(0,3)
+#p3 = my_net.newdijkstra(0,1)
+#print(p1[0])
+#my_net.node_to_intersetion(p1[0][2])
+
+#my_net.updateIntersection(graph,p1[0])
+#ps = [p1[0],p2[0],p3[0]]
+#my_net.multipleIntCount(graph,ps)
+
 
 #my_net.countCar(graph,p1)
 #print(graph['SINK S2'])
