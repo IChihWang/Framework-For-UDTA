@@ -14,7 +14,8 @@
 
 
 from miniVnet import MINIVNET
-
+import random
+random.seed(0)
 
 if __name__ == '__main__':
     my_net = MINIVNET()
@@ -53,24 +54,47 @@ if __name__ == '__main__':
 
 
 
-#a = {i:int(np.random.randint(10, size=1)) for i in range(10)}
-
-#my_net.debug()
-graph = my_net.dijkstraGraph()
-#print(graph)
-
-p1,t1 = my_net.nnewdijkstra(1,2)
-#my_net.appendLinktoSink()
-#print(p1[1].out_links)
-#p2 = my_net.newdijkstra(0,3)
-#p3 = my_net.newdijkstra(0,1)
-#print(p1[0])
-#my_net.node_to_intersetion(p1[0][2])
-
-#my_net.updateIntersection(graph,p1[0])
-#ps = [p1[0],p2[0],p3[0]]
-#my_net.multipleIntCount(graph,ps)
 
 
-#my_net.countCar(graph,p1)
-#print(graph['SINK S2'])
+# Baseline. the original path dijkstra
+paths1 = []
+times1 = []
+for _ in range(5):
+    a,b = random.sample(range(0,7),2)
+    p,t = my_net.dijkstra(a,b)
+    paths1.append(p)
+    times1.append(t)
+
+
+# Update the link to see if the balance happened
+paths2 = []
+times2 = []
+for _ in range(5):
+    a,b = random.sample(range(0,7),2)
+    p,t = my_net.dijkstra(a,b)
+    paths2.append(p)
+    times2.append(t)
+    my_net.updateLinkCost(p,t)
+    
+# reroute part#
+## redo linkcost
+## dijkstra
+
+
+# Reset the cost link
+paths3 = []
+times3 = []
+for _ in range(5):
+    p = paths2[_]
+    t = times2[_]
+    my_net.resetLinkCost(p,t)
+    a,b = random.sample(range(0,7),2)
+    p,t = my_net.dijkstra(a,b)
+    paths3.append(p)
+    times3.append(t)
+
+# Finish the undoLinkCost
+
+my_net.multipleIntCount(paths1,times1)
+my_net.multipleIntCount(paths2,times2)
+my_net.multipleIntCount(paths3,times3)

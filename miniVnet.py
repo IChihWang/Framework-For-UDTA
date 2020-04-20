@@ -124,7 +124,8 @@ class MINIVNET:
         self.dgraph = {}
         self.intersection_nodes = []
         self.sink_nodes = []
-        
+        self.car_number = 0
+
     
     # ================ Setup the network ====================
     def addIntersection(self, name, num_lane):
@@ -217,14 +218,16 @@ class MINIVNET:
                         if node is insec_node:
                             return intersection
 
-    def dijkstra(self,s1,s2):
+    def dijkstra(self,s1,s2, global_time):
+        self.car_number += 1
+        car_id = self.car_number + 1
         self.start = self.sinks[s1]
         self.goal = self.sinks[s2]
         print('--------- Start Routing ---------')
-        print('Routing the path goes from {} to {}'.format(self.start,self.goal)) 
-        
+        print('Routing the path goes from {} to {}'.format(self.start,self.goal))
         self.potential_list = []
         self.from_node = {}
+        self.from_edge = {}
         self.car_timestamp = {}
         # Reset
         for node in self.nodes:
@@ -245,18 +248,21 @@ class MINIVNET:
             for out_edge in node.out_links:
                 out_node = self.getNode(out_edge)
                 for _ in range(time - 9):
+                    # append a constant value: 1
                     out_edge.cost.append(0)
                 self.next_time = node.value + out_edge.cost[time]
                 if self.next_time < out_node.value:
                     out_node.setValue(self.next_time)
                     self.node_list.append(out_node)
                     self.from_node[out_node] = node
+                    self.from_edge[out_node] = out_edge
             self.car_timestamp[node] = node.value
         
         # Record the path
         self.goal_nodes = self.sink_to_node(self.goal)
         self.path = []
         self.path_node_list = []
+        self.path_edge_list = []
         for gnode in self.goal_nodes:
             if gnode in self.from_node:
                 self.path_node_list.append(gnode)
@@ -265,6 +271,7 @@ class MINIVNET:
                         self.path_node = self.path_node_list.pop()
                         self.path.insert(0, self.path_node)
                         self.path_node_list.append(self.from_node[self.path_node])
+                        self.path_edge_list.insert(0, self.from_edge[self.path_node])
                     except KeyError:
                         break
         for node in self.path:
@@ -289,10 +296,33 @@ class MINIVNET:
         for node in self.optimallist[1:-1]:
             self.print_list.append(self.node_to_intersetion(node))
         self.print_list.append(self.goal)
+
+        time_offset = global_time
+        for i in range(1, len(self.optimaltime)):
+            remaining_time = self.optimaltime[i]
+            for j in range(time_offset):
+                if len(self.path_edge_list[i - 1].at) <= j:
+                    self.path_edge_list[i - 1].at.append([])
+
+            for j in range(time_offset, time_offset + remaining_time):
+                if len(self.path_edge_list[i - 1].at) <= j:
+                    self.path_edge_list[i - 1].at.append([])
+                self.path_edge_list[i - 1].at[j].append((car_id, time_offset + remaining_time - j))
+            time_offset = time_offset + remaining_time
+
+        print('The car is ' + str(car_id))
         print('The path is ' + str(self.print_list))
         print('Coresponding time is' + str(self.optimaltime))
+        print('The detailed link is' + str(self.path_edge_list))
+
+        for link in self.path_edge_list:
+            print(link.at)
         print('# ============================= #')
-        return self.optimallist, self.optimaltime
+
+
+
+
+        return self.optimallist, self.print_list, self.optimaltime
         #     self.path.insert(0,start)
         #     if goal_node.value != infinity:
         #     self.potential_list = self.potential_list[::-1]
@@ -306,6 +336,12 @@ class MINIVNET:
             for link in path[i].out_links:
                 if link.out_node is path[i+1]:
                     link.cost[time[i]] += 1
+    
+    def resetLinkCost(self,path,time):
+        for i in range(0,len(path)-1,2):
+            for link in path[i].out_links:
+                if link.out_node is path[i+1]:
+                    link.cost[time[i]] -= 1
 
     def updateIntersection(self, path,time):
         intersection_list = self.intersection_nodes
