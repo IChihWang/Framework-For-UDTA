@@ -1,4 +1,4 @@
-from basicGraph import NODE, LINK
+from basicGraph import NODE, LINK, CAR
 import itertools
 inf = float('inf')
 
@@ -218,9 +218,10 @@ class MINIVNET:
                         if node is insec_node:
                             return intersection
 
-    def dijkstra(self,s1,s2, global_time):
-        self.car_number += 1
-        car_id = self.car_number + 1
+    def dijkstra(self,car_list,s1,s2, global_time):
+        car = CAR()
+        #self.car_number += 1
+        #car_id = self.car_number + 1
         self.start = self.sinks[s1]
         self.goal = self.sinks[s2]
         print('--------- Start Routing ---------')
@@ -242,15 +243,48 @@ class MINIVNET:
             self.node_list.append(snode)
         # algorithm. Check the dictionary is empty or note
         while self.node_list:
-            # Greedy. Loeset node for this
+            # Greedy. Lowset node for this
             node = self.node_list.pop()
             time = node.value
+            # Only intersection nodes have the turning information
+            if node in self.intersection_nodes:
+                if node.id % 4 == 1:
+                    car_list['N'].append(car)
+                elif node.id % 4 == 2:
+                    car_list['E'].append(car)
+                elif node.id % 4 == 3:
+                    car_list['S'].append(car)
+                else:
+                    car_list['W'].append(car)
+            
+                for out_edge in node.out_links:
+                    out_node = self.getNode(out_edge)
+                    if out_node.id % 3 == 0:
+                        car.turning = 'L'
+                    elif out_node.id % 3 == 1:
+                        car.turning = 'S'
+                    else: 
+                        car.turning = 'R'
+                    # get cost from RoadRunner
+                    self.next_time = node.value + car_cost['L']
+                    if self.next_time < out_node.value:
+                        out_node.setValue(self.next_time)
+                        self.node_list.append(out_node)
+                        self.from_node[out_node] = node
+                        self.from_edge[out_node] = out_edge
+                
+                self.car_timestamp[node] = node.value
+
+                    #for _ in range(time - 9):
+                        # append a constant value: 1
+                    #    out_edge.cost.append(0)
+                    #self.next_time = node.value + out_edge.cost[time]
+                    
             for out_edge in node.out_links:
                 out_node = self.getNode(out_edge)
-                for _ in range(time - 9):
-                    # append a constant value: 1
-                    out_edge.cost.append(0)
-                self.next_time = node.value + out_edge.cost[time]
+                # get cost from RoadRunner
+                car_cost = get_cost(car_list)
+                self.next_time = node.value + car_cost[]
                 if self.next_time < out_node.value:
                     out_node.setValue(self.next_time)
                     self.node_list.append(out_node)
