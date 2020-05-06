@@ -1,6 +1,6 @@
 import itertools
 import numpy as np
-
+from miniVnet import INTERSECTION
 np.random.seed(0)
 
 
@@ -24,13 +24,16 @@ class NODE:
 class LINK:
     newid = itertools.count(0)
 
-    def __init__(self):
+    def __init__(self, intersection):
         self.id = next(self.newid)
         self.in_node = None
         self.out_node = None
-        #self.cost = [int(np.random.randint(10, size=1)) for _ in range(10)]
-        self.cost = 0
+        # float
+        # self.cost = [int(np.random.randint(10, size=1)) for _ in range(10)]
+        self.cost = list(np.random.uniform(low=0.1, high=10, size=10))
         self.at = []
+        self.intersection = intersection
+
 
     def updateCost(self, value):
         self.cost = value
@@ -39,13 +42,13 @@ class LINK:
         return '{} {}'.format(self.__class__.__name__, self.id)
 
 
-class CAR:
-    newid = itertools.count(0)
+class Car:
+    #new_id = itertools.count(0)
 
-    def __init__(self):
-        self.id = next(self.newid)
-        self.AT = {}
-        self.position = None
+    def __init__(self, car_id, AT, position):
+        self.id = car_id
+        self.AT = AT
+        self.position = position
         self.turning = None
         self.path = []
         self.is_scheduled = 0
