@@ -318,6 +318,7 @@ class MINIVNET:
                     Car(car_id, None, 3 * (k + math.ceil(self.optimallist[i - 1].value) - self.optimallist[i - 1].value)))
 
             time_offset = time_offset + remaining_time
+        # TODO: car lane update
 
         print('The car is ' + str(car_id))
         print('The path is ' + str(self.print_list))
