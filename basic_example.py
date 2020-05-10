@@ -15,7 +15,10 @@
 
 from miniVnet import MiniVnet
 import random
+import numpy as np
+
 random.seed(0)
+np.random.seed(0)
 
 if __name__ == '__main__':
     my_net = MiniVnet()
@@ -70,7 +73,7 @@ if __name__ == '__main__':
 
     #print(my_net.sinks[0].out_nodes[0].out_links)
     src_node = my_net.sinks[0].out_nodes[0]
-    my_net.dijkstra(src_node, None)
+    my_net.dijkstra(src_node, None, 0)
 
 
 

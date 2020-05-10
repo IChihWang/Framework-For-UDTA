@@ -8,8 +8,8 @@ class Node:
     def __init__(self):
         self.id = next(self.newid)
         self.is_activated = False
-        self.in_links = []
-        self.out_links = []
+        self.in_links = []  # [link..]
+        self.out_links = [] # touple: [](turn, link)..]
 
         # For Dijkstra's algorithm
         self.arrival_time = float('inf')  # For Dijkstra node value

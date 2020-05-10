@@ -4,7 +4,7 @@ import math
 
 from basic_graph import Node, Link, Car
 import itertools
-
+import global_val
 
 class Intersection:
     def __init__(self, name, num_lane):
@@ -23,7 +23,7 @@ class Intersection:
                 for k in range(3):  # left, straight, right
                     source_node = self.in_nodes[i][j]
                     new_link = Link()
-                    source_node.out_links.append(new_link)
+                    source_node.out_links.append((k,new_link))
                     new_link.in_node = source_node
 
                     sink_node = self.out_nodes[(i-1-k)%4][j]
@@ -98,7 +98,7 @@ class Road:
                 self.link_groups[0][i].in_node = in_nodes[i]
                 self.link_groups[1][i].out_node = out_nodes[i]
 
-                in_nodes[i].out_links.append(self.link_groups[0][i])
+                in_nodes[i].out_links.append((global_val.STRAIGHT_TURN, self.link_groups[0][i]))
                 out_nodes[i].in_links.append(self.link_groups[1][i])
         else:
             self.components[1] = component
@@ -106,7 +106,7 @@ class Road:
                 self.link_groups[1][i].in_node = in_nodes[i]
                 self.link_groups[0][i].out_node = out_nodes[i]
 
-                in_nodes[i].out_links.append(self.link_groups[1][i])
+                in_nodes[i].out_links.append((global_val.STRAIGHT_TURN, self.link_groups[1][i]))
                 out_nodes[i].in_links.append(self.link_groups[0][i])
 
 

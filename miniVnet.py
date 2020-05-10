@@ -5,7 +5,7 @@ import math
 from vehicle_map import Intersection, Road, Sink
 import itertools
 import heapq
-
+import global_val
 
 class MiniVnet:
     def __init__(self):
@@ -98,14 +98,16 @@ class MiniVnet:
 
 
 
-    def dijkstra(self, src_node, dst_node):
+    def dijkstra(self, src_node, dst_node, time_bias):
+        # time_bias is the time bias for those on-the-fly cars, whose is not yet at the source node
+
         # (initialization)  set every node to be inf. Except the start node= 0
         for intersection in self.intersections:
             intersection.initial_for_dijkstra()
         for sink in self.sinks:
             sink.initial_for_dijkstra()
 
-        src_node.set_arrival_time(0)
+        src_node.set_arrival_time(0 + time_bias)
 
         unvisited_queue = [(src_node.get_arrival_time(), src_node)]
 
@@ -120,7 +122,7 @@ class MiniVnet:
 
 
             # visiting neighbors
-            for out_link in current_node.out_links:
+            for turning, out_link in current_node.out_links:
                 neighbor_node = out_link.out_node
                 current_time = current_node.get_arrival_time()
 
