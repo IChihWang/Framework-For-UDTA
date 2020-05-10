@@ -52,6 +52,7 @@ if __name__ == '__main__':
 
     my_net.compile()
 
+    '''
     i1.print_details()
     i2.print_details()
     i3.print_details()
@@ -65,7 +66,11 @@ if __name__ == '__main__':
     s6.print_details()
     s7.print_details()
     s8.print_details()
+    '''
 
+    #print(my_net.sinks[0].out_nodes[0].out_links)
+    src_node = my_net.sinks[0].out_nodes[0]
+    my_net.dijkstra(src_node, None)
 
 
 

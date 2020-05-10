@@ -101,12 +101,52 @@ class MiniVnet:
     def dijkstra(self, src_node, dst_node):
         # (initialization)  set every node to be inf. Except the start node= 0
         for intersection in self.intersections:
-            intersection.set_all_node_value(float('inf'))
+            intersection.initial_for_dijkstra()
+        for sink in self.sinks:
+            sink.initial_for_dijkstra()
 
-        src_node.setValue(float(0))
+        src_node.set_arrival_time(0)
+
+        unvisited_queue = [(src_node.get_arrival_time(), src_node)]
+
+        while len(unvisited_queue) > 0:
+            current_arrival_time, current_node = heapq.heappop(unvisited_queue)
+
+            # Only process the first time we pop the node from the queue
+            if current_node.is_visited:
+                continue
+            else:
+                current_node.set_is_visited(True)
 
 
+            # visiting neighbors
+            for out_link in current_node.out_links:
+                neighbor_node = out_link.out_node
+                current_time = current_node.get_arrival_time()
 
+                # 1. Check if there is a record of the traveling_time
+                if len(out_link.traveling_time)-1 < int(math.floor(current_time)):
+                    # Append zeros as the traveling_time into the data_list
+                    for _ in range(int(math.floor(current_time))-(len(out_link.traveling_time)-1)):
+                        out_link.traveling_time.append(0)
+                        # Future work: append something other than zeros
+                else:
+                    pass
+
+                # 2. Check the value of the neighbors in Dijkstra
+                arriving_neighbor_time = current_time + out_link.traveling_time[int(math.floor(current_time))]
+                if neighbor_node.get_arrival_time() > arriving_neighbor_time:
+                    neighbor_node.set_arrival_time(arriving_neighbor_time)
+                    neighbor_node.set_from_link(out_link)
+                    heapq.heappush(unvisited_queue, (arriving_neighbor_time, neighbor_node))
+
+        #'''
+        for intersection in self.intersections:
+            intersection.print_node_arrival_time()
+        print("============================")
+        for sink in self.sinks:
+            sink.print_node_arrival_time()
+        #'''
 
     '''
 
