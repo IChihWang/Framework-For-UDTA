@@ -102,3 +102,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+Roadrunner/gen_intersection/desktop.ini

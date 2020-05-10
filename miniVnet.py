@@ -1,119 +1,13 @@
+ #coding=utf-8
+
 import math
 
-from basicGraph import NODE, LINK, Car
+from vehicle_map import Intersection, Road, Sink
 import itertools
-
-inf = float('inf')
-
-
-class INTERSECTION:
-    def __init__(self, name, num_lane):
-        self.name = name
-        self.num_lane = num_lane
-        self.components = [None for i in range(4)]
-        self.direction_nodes = [[[NODE() for k in range(num_lane)] for j in range(2)] for i in range(4)]
-        # self.new_link = []
-        self.new_link = [[[LINK(self) for k in range(3)] for j in range(num_lane)] for i in range(4)]
-        # Allocate links to nodes
-        for i in range(4):
-            for j in range(num_lane):
-                for k in range(3):  # left, straight, right
-                    source_node = self.direction_nodes[i][0][j]
-                    # new_link = LINK()
-                    # source_node.out_links.append(new_link)
-                    source_node.out_links.append(self.new_link[i][j][k])
-                    # new_link.in_node = source_node
-                    self.new_link[i][j][k].in_node = source_node
-                    # self.new_link.append(source_node)
-
-                    sink_node = self.direction_nodes[(i + 1 + k) % 4][1][j]
-                    # sink_node.in_links.append(new_link)
-                    sink_node.in_links.append(self.new_link[i][j][k])
-                    # new_link.out_node = sink_node
-                    self.new_link[i][j][k].out_node = sink_node
-                    # self.new_link.append(sink_node)
-
-    def connect(self, index, road):
-        assert self.components[
-                   index] == None, "Two components are assigned to the same entry of the intersection: " + str(
-            self.name)
-
-        assert index < 4, "Index out of range, intersection: " + str(self.name)
-
-        self.components[index] = road
-
-        road.connect(self, self.direction_nodes[index][1], self.direction_nodes[index][0])
-
-    def checkSetting(self):
-        component_list = [component for component in self.components if component != None]
-
-        assert len(component_list) > 2, "Error: intersection " + str(self.name) + " has too few connections."
-
-    def debug(self):
-        print(self.name, self.num_lane, self.components)
-
-    def __repr__(self):
-        return '{} {}'.format(self.__class__.__name__, self.name)
+import heapq
 
 
-class ROAD:
-    def __init__(self, num_lane):
-        self.num_lane = num_lane
-        self.link_groups = [[LINK() for j in range(num_lane)] for i in range(2)]
-        self.components = [None for i in range(2)]
-
-    def connect(self, component, in_nodes, out_nodes):
-        assert self.components[0] == None or self.components[1] == None, "A road is overly assigned"
-
-        if self.components[0] == None:
-            self.components[0] = component
-            for i in range(self.num_lane):
-                self.link_groups[0][i].in_node = in_nodes[i]
-                self.link_groups[1][i].out_node = out_nodes[i]
-        else:
-            self.components[1] = component
-            for i in range(self.num_lane):
-                self.link_groups[1][i].in_node = in_nodes[i]
-                self.link_groups[0][i].out_node = out_nodes[i]
-
-
-#    def checkSetting(self):
-#        component_list = [component for component in self.components if component != None]
-#        
-#      assert len(component_list) == 2, "Error: Road " + str(self.name) + " has too few connections."
-
-
-class SINK:
-    newid = itertools.count(0)
-
-    def __init__(self, name, num_lane):
-        self.name = name
-        self.num_lane = num_lane
-        self.node_groups = [[NODE() for i in range(num_lane)] for i in range(2)]
-        self.components = None
-        self.id = next(SINK.newid)
-        self.value = 0
-
-    def connect(self, index, road):
-        assert self.components == None, "The sink is already connected, sink: " + str(self.name)
-
-        assert index == 0, "Index out of range, sink: " + str(self.name)
-
-        self.components = road
-
-        road.connect(self, self.node_groups[0], self.node_groups[1])
-
-    def setValue(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return '{} {}'.format(self.__class__.__name__, self.name)
-
-    def checkSetting(self):
-        assert self.components != None, "Error: sink " + str(self.name) + " has too few connections."
-
-
-class MINIVNET:
+class MiniVnet:
     def __init__(self):
         self.is_compiled = False
         self.intersections = []
@@ -129,14 +23,14 @@ class MINIVNET:
     def addIntersection(self, name, num_lane):
         assert self.is_compiled == False, "The miniVnet has been compiled"
 
-        new_intersection = INTERSECTION(name, num_lane)
+        new_intersection = Intersection(name, num_lane)
         self.intersections.append(new_intersection)
         return new_intersection
 
     def addSink(self, name, num_lane):
         assert self.is_compiled == False, "The miniVnet has been compiled"
 
-        new_sink = SINK(name, num_lane)
+        new_sink = Sink(name, num_lane)
         self.sinks.append(new_sink)
         return new_sink
 
@@ -147,7 +41,7 @@ class MINIVNET:
 
         num_lane = component_1.num_lane
 
-        new_road = ROAD(num_lane)
+        new_road = Road(num_lane)
         self.roads.append(new_road)
         component_1.connect(idx_1, new_road)
         component_2.connect(idx_2, new_road)
@@ -163,30 +57,30 @@ class MINIVNET:
             for i_col in range(1, N):
                 component_1 = intersections[i_row][i_col - 1]
                 component_2 = intersections[i_row][i_col]
-                self.connect(component_1, 2, component_2, 0)
+                self.connect(component_1, 1, component_2, 3)
         for i_col in range(N):
             for i_row in range(1, N):
                 component_1 = intersections[i_row - 1][i_col]
                 component_2 = intersections[i_row][i_col]
-                self.connect(component_1, 3, component_2, 1)
+                self.connect(component_1, 0, component_2, 2)
 
         # Connect sinks
         for i_idx in range(N):
             target_sink = sinks[0][i_idx]
             target_intersection = intersections[0][i_idx]
-            self.connect(target_sink, 0, target_intersection, 1)
+            self.connect(target_sink, 0, target_intersection, 2)
 
             target_sink = sinks[1][i_idx]
             target_intersection = intersections[i_idx][N - 1]
-            self.connect(target_sink, 0, target_intersection, 2)
+            self.connect(target_sink, 0, target_intersection, 1)
 
             target_sink = sinks[2][i_idx]
             target_intersection = intersections[N - 1][N - 1 - i_idx]
-            self.connect(target_sink, 0, target_intersection, 3)
+            self.connect(target_sink, 0, target_intersection, 0)
 
             target_sink = sinks[3][i_idx]
             target_intersection = intersections[N - 1 - i_idx][0]
-            self.connect(target_sink, 0, target_intersection, 0)
+            self.connect(target_sink, 0, target_intersection, 3)
 
         self.compile()
 
@@ -197,7 +91,26 @@ class MINIVNET:
     def debug(self):
         pass
 
-    # =========== Use the DataStructure to route ====================== #                    
+
+    # ======================== Compile ========================== #
+    def compile(self):
+        self.is_compiled = True
+
+
+
+    def dijkstra(self, src_node, dst_node):
+        # (initialization)  set every node to be inf. Except the start node= 0
+        for intersection in self.intersections:
+            intersection.set_all_node_value(float('inf'))
+
+        src_node.setValue(float(0))
+
+
+
+
+    '''
+
+    # =========== Use the DataStructure to route ====================== #
     def getNode(self, out_edge):
         return out_edge.out_node
 
@@ -231,22 +144,28 @@ class MINIVNET:
         self.from_node = {}
         self.from_edge = {}
         self.car_timestamp = {}
-        # Reset
+
+        # (initialization)  set every node to be inf. Except the start node= 0
         for node in self.nodes:
-            node.setValue(inf)
-        # set every node to be inf. Except the start node= 0
+            node.setValue(float('inf'))
+
         start_nodes = self.sink_to_node(self.start)
         for node in start_nodes:
             node.setValue(0)
 
+        # (initialization) Add the source node into the queue
         self.node_list = []
         for snode in start_nodes:
             self.node_list.append(snode)
-        # algorithm. Check the dictionary is empty or note
+
+        # Dijkstra. Check the dictionary is empty or note
+        # TODO: change the list to heap
         while self.node_list:
             # Greedy. Loeset node for this
             node = self.node_list.pop()
             time = node.value
+
+
             for out_edge in node.out_links:
                 out_node = self.getNode(out_edge)
                 for _ in range(math.ceil(time - 9)):
@@ -338,6 +257,9 @@ class MINIVNET:
 
     # ======================= UPDATE The Intersection Part ===============================#
 
+
+
+
     def updateLinkCost(self, path, time):
         for i in range(0, len(path) - 1, 2):
             for link in path[i].out_links:
@@ -367,6 +289,7 @@ class MINIVNET:
                 dict3[key] = [value, dict1[key]]
         return dict3
 
+
     # Merge dictionaries and add values of common keys in a list
     def multipleIntCount(self, paths, times):
         time_dic = {}
@@ -376,7 +299,7 @@ class MINIVNET:
         time_dic = dict(sorted(time_dic.items()))
         print(time_dic)
 
-    # ============= Add Links to the Network ====================== #    
+    # ============= Add Links to the Network ====================== #
     def appendLinktoIntersection(self):
         for graph_intersection in self.intersections:
             # Add link inside Intersections
@@ -436,3 +359,6 @@ class MINIVNET:
         self.appendLinktoIntersection()
 
     # ================ Run the network ===================
+
+
+    '''

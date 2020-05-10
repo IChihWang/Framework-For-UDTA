@@ -1,10 +1,8 @@
 import itertools
 import numpy as np
-from miniVnet import INTERSECTION
-np.random.seed(0)
 
 
-class NODE:
+class Node:
     newid = itertools.count(0)
 
     def __init__(self):
@@ -14,17 +12,17 @@ class NODE:
         self.out_links = []
         self.value = float('inf')  # For Dijkstra node value
 
-    def setValue(self, value):
+    def set_value(self, value):
         self.value = value
 
     def __repr__(self):
         return '{} {}'.format(self.__class__.__name__, self.id)
 
 
-class LINK:
+class Link:
     newid = itertools.count(0)
 
-    def __init__(self, intersection):
+    def __init__(self):
         self.id = next(self.newid)
         self.in_node = None
         self.out_node = None
@@ -32,8 +30,6 @@ class LINK:
         # self.cost = [int(np.random.randint(10, size=1)) for _ in range(10)]
         self.cost = list(np.random.uniform(low=0.1, high=10, size=10))
         self.at = []
-        self.intersection = intersection
-
 
     def updateCost(self, value):
         self.cost = value

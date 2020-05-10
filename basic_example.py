@@ -13,48 +13,63 @@
 #
 
 
-from miniVnet import MINIVNET
+from miniVnet import MiniVnet
 import random
 random.seed(0)
 
 if __name__ == '__main__':
-    my_net = MINIVNET()
-    
-    i1 = my_net.addIntersection('I1', 3)
-    i2 = my_net.addIntersection('I2', 3)
-    i3 = my_net.addIntersection('I3', 3)
-    i4 = my_net.addIntersection('I4', 3)
-    
-    s1 = my_net.addSink('S1', 3)
-    s2 = my_net.addSink('S2', 3)
-    s3 = my_net.addSink('S3', 3)
-    s4 = my_net.addSink('S4', 3)
-    s5 = my_net.addSink('S5', 3)
-    s6 = my_net.addSink('S6', 3)
-    s7 = my_net.addSink('S7', 3)
-    s8 = my_net.addSink('S8', 3)
-    
-    my_net.connect(i1, 0, s8, 0)
-    my_net.connect(i1, 1, s1, 0)
-    my_net.connect(i1, 2, i2, 0)
-    my_net.connect(i1, 3, i3, 1)
-    
-    my_net.connect(i2, 1, s2, 0)
-    my_net.connect(i2, 2, s3, 0)
-    my_net.connect(i2, 3, i4, 1)
-    
-    my_net.connect(i3, 0, s7, 0)
-    my_net.connect(i3, 2, i4, 0)
-    my_net.connect(i3, 3, s6, 0)
-    
-    my_net.connect(i4, 2, s4, 0)
-    my_net.connect(i4, 3, s5, 0)
-    
+    my_net = MiniVnet()
+
+    i1 = my_net.addIntersection('I1', 1)
+    i2 = my_net.addIntersection('I2', 1)
+    i3 = my_net.addIntersection('I3', 1)
+    i4 = my_net.addIntersection('I4', 1)
+
+    s1 = my_net.addSink('S1', 1)
+    s2 = my_net.addSink('S2', 1)
+    s3 = my_net.addSink('S3', 1)
+    s4 = my_net.addSink('S4', 1)
+    s5 = my_net.addSink('S5', 1)
+    s6 = my_net.addSink('S6', 1)
+    s7 = my_net.addSink('S7', 1)
+    s8 = my_net.addSink('S8', 1)
+
+    my_net.connect(i1, 3, s8, 0)
+    my_net.connect(i1, 2, s1, 0)
+    my_net.connect(i1, 1, i2, 3)
+    my_net.connect(i1, 0, i3, 2)
+
+    my_net.connect(i2, 2, s2, 0)
+    my_net.connect(i2, 1, s3, 0)
+    my_net.connect(i2, 0, i4, 2)
+
+    my_net.connect(i3, 3, s7, 0)
+    my_net.connect(i3, 1, i4, 3)
+    my_net.connect(i3, 0, s6, 0)
+
+    my_net.connect(i4, 1, s4, 0)
+    my_net.connect(i4, 0, s5, 0)
+
     my_net.compile()
 
+    i1.print_details()
+    i2.print_details()
+    i3.print_details()
+    i4.print_details()
+
+    s1.print_details()
+    s2.print_details()
+    s3.print_details()
+    s4.print_details()
+    s5.print_details()
+    s6.print_details()
+    s7.print_details()
+    s8.print_details()
 
 
 
+
+'''
 
 # Baseline. the original path dijkstra
 paths1 = []
@@ -75,11 +90,10 @@ for _ in range(5):
     paths2.append(p)
     times2.append(t)
     my_net.updateLinkCost(p,t)
-    
+
 # reroute part#
 ## redo linkcost
 ## dijkstra
-
 
 # Reset the cost link
 paths3 = []
@@ -98,3 +112,5 @@ for _ in range(5):
 my_net.multipleIntCount(paths1,times1)
 my_net.multipleIntCount(paths2,times2)
 my_net.multipleIntCount(paths3,times3)
+
+'''
