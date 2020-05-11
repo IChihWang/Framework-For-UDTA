@@ -17,25 +17,27 @@ from miniVnet import MiniVnet
 import random
 import numpy as np
 
+from basic_graph import Car
+
 random.seed(0)
 np.random.seed(0)
 
 if __name__ == '__main__':
     my_net = MiniVnet()
 
-    i1 = my_net.addIntersection('I1', 1)
-    i2 = my_net.addIntersection('I2', 1)
-    i3 = my_net.addIntersection('I3', 1)
-    i4 = my_net.addIntersection('I4', 1)
+    i1 = my_net.addIntersection('I1', 3)
+    i2 = my_net.addIntersection('I2', 3)
+    i3 = my_net.addIntersection('I3', 3)
+    i4 = my_net.addIntersection('I4', 3)
 
-    s1 = my_net.addSink('S1', 1)
-    s2 = my_net.addSink('S2', 1)
-    s3 = my_net.addSink('S3', 1)
-    s4 = my_net.addSink('S4', 1)
-    s5 = my_net.addSink('S5', 1)
-    s6 = my_net.addSink('S6', 1)
-    s7 = my_net.addSink('S7', 1)
-    s8 = my_net.addSink('S8', 1)
+    s1 = my_net.addSink('S1', 3)
+    s2 = my_net.addSink('S2', 3)
+    s3 = my_net.addSink('S3', 3)
+    s4 = my_net.addSink('S4', 3)
+    s5 = my_net.addSink('S5', 3)
+    s6 = my_net.addSink('S6', 3)
+    s7 = my_net.addSink('S7', 3)
+    s8 = my_net.addSink('S8', 3)
 
     my_net.connect(i1, 3, s8, 0)
     my_net.connect(i1, 2, s1, 0)
@@ -72,8 +74,10 @@ if __name__ == '__main__':
     '''
 
     #print(my_net.sinks[0].out_nodes[0].out_links)
-    src_node = my_net.sinks[0].out_nodes[0]
-    my_net.dijkstra(src_node, None, 0)
+    car = Car(0, 1, 2)
+    src_node = my_net.sinks[0].out_nodes
+    dst_node = my_net.sinks[5].in_nodes
+    my_net.dijkstra(car, src_node, dst_node, 0)
 
 
 

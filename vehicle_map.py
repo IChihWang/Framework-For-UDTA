@@ -11,26 +11,28 @@ class Intersection:
         self.name = name
         self.num_lane = num_lane
         self.components = [None for i in range(4)]
-        self.in_nodes = [[Node() for k in range(num_lane)] for i in range(4)]
-        self.out_nodes = [[Node() for k in range(num_lane)] for i in range(4)]
+        self.in_nodes = [Node() for i in range(4)]
+        self.out_nodes = [Node() for i in range(4)]
         #self.direction_nodes = [[[Node() for k in range(num_lane)] for j in range(2)] for i in range(4)]
         self.links = []
         #self.new_link = [[[Link() for k in range(3)] for j in range(num_lane)] for i in range(4)]
 
         # Allocate links to nodes
         for i in range(4):
-            for j in range(num_lane):
-                for k in range(3):  # left, straight, right
-                    source_node = self.in_nodes[i][j]
-                    new_link = Link()
-                    source_node.out_links.append((k,new_link))
-                    new_link.in_node = source_node
+            for k in range(3):  # left, straight, right
+                new_link = Link()
 
-                    sink_node = self.out_nodes[(i-1-k)%4][j]
-                    sink_node.in_links.append(new_link)
-                    new_link.out_node = sink_node
+                source_node = self.in_nodes[i]
+                source_node.set_connect_to_intersection(self)
+                source_node.set_in_intersection_lane(i * num_lane)
+                source_node.out_links.append((k,new_link))
+                new_link.in_node = source_node
 
-                    self.links.append(new_link)
+                sink_node = self.out_nodes[(i-1-k)%4]
+                sink_node.in_links.append(new_link)
+                new_link.out_node = sink_node
+
+                self.links.append(new_link)
 
 
 
@@ -52,17 +54,24 @@ class Intersection:
 
     def initial_for_dijkstra(self):
         for i in range(4):
-            for j in range(self.num_lane):
-                self.in_nodes[i][j].initial_for_dijkstra()
-                self.out_nodes[i][j].initial_for_dijkstra()
+            self.in_nodes[i].initial_for_dijkstra()
+            self.out_nodes[i].initial_for_dijkstra()
+
+    def get_cost_from_manager(self, arrival_time):
+        # Call single intersection manager
+        # Update the travel time (delay) on links within the intersection
+
+        #for in_node in self.in_nodes:
+
+
+        pass
 
     def print_node_arrival_time(self):
         # For debugging
         print("=== ", self.name)
         for i in range(4):
-            for j in range(self.num_lane):
-                print("  ", self.in_nodes[i][j].id, self.in_nodes[i][j].arrival_time)
-                print("  ", self.out_nodes[i][j].id, self.out_nodes[i][j].arrival_time)
+            print("  ", self.in_nodes[i].id, self.in_nodes[i].arrival_time)
+            print("  ", self.out_nodes[i].id, self.out_nodes[i].arrival_time)
 
 
     def print_details(self):
@@ -79,7 +88,7 @@ class Intersection:
 class Road:
     def __init__(self, num_lane):
         self.num_lane = num_lane
-        self.link_groups = [[Link() for j in range(num_lane)] for i in range(2)]
+        self.link_groups = [Link() for i in range(2)]
         self.components = [None for i in range(2)]
 
     '''
@@ -94,20 +103,18 @@ class Road:
         assert self.components[0] == None or self.components[1] == None, "A road is overly assigned"
         if self.components[0] == None:
             self.components[0] = component
-            for i in range(self.num_lane):
-                self.link_groups[0][i].in_node = in_nodes[i]
-                self.link_groups[1][i].out_node = out_nodes[i]
+            self.link_groups[0].in_node = in_nodes
+            self.link_groups[1].out_node = out_nodes
 
-                in_nodes[i].out_links.append((global_val.STRAIGHT_TURN, self.link_groups[0][i]))
-                out_nodes[i].in_links.append(self.link_groups[1][i])
+            in_nodes.out_links.append((global_val.STRAIGHT_TURN, self.link_groups[0]))
+            out_nodes.in_links.append(self.link_groups[1])
         else:
             self.components[1] = component
-            for i in range(self.num_lane):
-                self.link_groups[1][i].in_node = in_nodes[i]
-                self.link_groups[0][i].out_node = out_nodes[i]
+            self.link_groups[1].in_node = in_nodes
+            self.link_groups[0].out_node = out_nodes
 
-                in_nodes[i].out_links.append((global_val.STRAIGHT_TURN, self.link_groups[1][i]))
-                out_nodes[i].in_links.append(self.link_groups[0][i])
+            in_nodes.out_links.append((global_val.STRAIGHT_TURN, self.link_groups[1]))
+            out_nodes.in_links.append(self.link_groups[0])
 
 
 #    def checkSetting(self):
@@ -132,8 +139,8 @@ class Sink:
         self.name = name
         self.num_lane = num_lane
         #self.node_groups = [[Node() for i in range(num_lane)] for i in range(2)]
-        self.in_nodes = [Node() for i in range(num_lane)]
-        self.out_nodes = [Node() for i in range(num_lane)]
+        self.in_nodes = Node()
+        self.out_nodes = Node()
         self.components = None
         self.id = next(Sink.newid)
 
@@ -151,16 +158,14 @@ class Sink:
 
 
     def initial_for_dijkstra(self):
-        for i in range(self.num_lane):
-            self.in_nodes[i].initial_for_dijkstra()
-            self.out_nodes[i].initial_for_dijkstra()
+        self.in_nodes.initial_for_dijkstra()
+        self.out_nodes.initial_for_dijkstra()
 
     def print_node_arrival_time(self):
         # For debugging
         print("=== ", self.name)
-        for i in range(self.num_lane):
-            print("  ", self.in_nodes[i].id, self.in_nodes[i].arrival_time)
-            print("  ", self.out_nodes[i].id, self.out_nodes[i].arrival_time)
+        print("  ", self.in_nodes.id, self.in_nodes.arrival_time)
+        print("  ", self.out_nodes.id, self.out_nodes.arrival_time)
 
 
     def __repr__(self):

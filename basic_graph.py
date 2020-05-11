@@ -16,29 +16,47 @@ class Node:
         self.is_visited = False
         self.from_link = None
 
+        # Variable for connecting to intersection manager
+        self.connect_to_intersection = None
+        self.in_intersection_lane = None
+
+
+
     # Methods for Dijkstra's algorithm
     def initial_for_dijkstra(self):
         self.arrival_time = float('inf')
         self.is_visited = False
         self.from_link = None
 
+    def set_connect_to_intersection(self, intersection):
+        self.belong_to_intersection = intersection
+    def get_connect_to_intersection(self):
+        return self.connect_to_intersection
+
+    def set_in_intersection_lane(self, lane):
+        self.in_intersection_lane = lane
+    def get_in_intersection_lane(self):
+        return self.in_intersection_lane
+
     def set_is_visited(self, is_visited):
         self.is_visited = is_visited
+    def get_is_visited(self):
+        return self.is_visited
 
     def set_arrival_time(self, arrival_time):
         self.arrival_time = arrival_time
-
     def get_arrival_time(self):
         return self.arrival_time
 
     def set_from_link(self, from_link):
         self.from_link = from_link
-
     def get_from_link(self):
         return self.from_link
-
     def get_from_node(self):
-        return self.from_link.in_node
+        if self.from_link == None:
+            return None
+        else:
+            return self.from_link.in_node
 
 
 
@@ -56,7 +74,9 @@ class Link:
         self.out_node = None
         # float
         # self.cost = [int(np.random.randint(10, size=1)) for _ in range(10)]
-        self.traveling_time = list(np.random.uniform(low=1, high=3, size=20))
+        # self.traveling_time = list(np.random.uniform(low=1, high=3, size=20))
+        self.traveling_time = [0 for _ in range(5)]
+        self.car_data_base = [[] for _ in range(5)] # 2D array
         self.at = []
 
     '''

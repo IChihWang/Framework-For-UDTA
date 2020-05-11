@@ -97,8 +97,8 @@ class MiniVnet:
         self.is_compiled = True
 
 
-
-    def dijkstra(self, src_node, dst_node, time_bias):
+    # =========== Use the DataStructure to route ====================== #
+    def dijkstra(self, car, src_node, dst_node, time_bias):
         # time_bias is the time bias for those on-the-fly cars, whose is not yet at the source node
 
         # (initialization)  set every node to be inf. Except the start node= 0
@@ -115,11 +115,15 @@ class MiniVnet:
             current_arrival_time, current_node = heapq.heappop(unvisited_queue)
 
             # Only process the first time we pop the node from the queue
-            if current_node.is_visited:
+            if current_node.get_is_visited() == True:
                 continue
             else:
                 current_node.set_is_visited(True)
 
+            # Update link cost by Roadrunner
+            current_intersection = current_node.get_connect_to_intersection()
+            if current_intersection != None:
+                current_intersection.get_cost_from_manager(current_arrival_time)
 
             # visiting neighbors
             for turning, out_link in current_node.out_links:
@@ -150,6 +154,16 @@ class MiniVnet:
             sink.print_node_arrival_time()
         #'''
 
+        # Trace back from destination to source
+        tracing_node = dst_node
+        car.path.insert(0, tracing_node)
+
+        while tracing_node.get_from_link() != None:
+            tracing_node = tracing_node.get_from_node()
+            car.path.insert(0, tracing_node)
+
+        for node in car.path:
+            print(node, node.arrival_time)
     '''
 
     # =========== Use the DataStructure to route ====================== #
