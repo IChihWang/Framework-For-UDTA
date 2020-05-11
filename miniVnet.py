@@ -143,16 +143,16 @@ class MiniVnet:
                 current_time = current_node.get_arrival_time()
 
                 # 1. Check if there is a record of the traveling_time
-                if len(out_link.traveling_time)-1 < int(math.floor(current_time)):
+                if len(out_link.delay)-1 < int(math.floor(current_time)):
                     # Append zeros as the traveling_time into the data_list
-                    for _ in range(int(math.floor(current_time))-(len(out_link.traveling_time)-1)):
-                        out_link.traveling_time.append(0)
+                    for _ in range(int(math.floor(current_time))-(len(out_link.delay)-1)):
+                        out_link.delay.append(0)
                         # Future work: append something other than zeros
                 else:
                     pass
 
                 # 2. Check the value of the neighbors in Dijkstra
-                arriving_neighbor_time = current_time + out_link.traveling_time[int(math.floor(current_time))]
+                arriving_neighbor_time = current_time +  out_link.traveling_time + out_link.delay[int(math.floor(current_time))]
                 if neighbor_node.get_arrival_time() > arriving_neighbor_time:
                     neighbor_node.set_arrival_time(arriving_neighbor_time)
                     neighbor_node.set_from_link(out_link)

@@ -82,7 +82,9 @@ class Link:
         # float
         # self.cost = [int(np.random.randint(10, size=1)) for _ in range(10)]
         # self.traveling_time = list(np.random.uniform(low=1, high=3, size=20))
-        self.traveling_time = [0 for _ in range(5)]
+        #self.traveling_time = [0 for _ in range(5)]
+        self.traveling_time = 0
+        self.delay = [0 for _ in range(5)]
         self.car_data_base = [[] for _ in range(5)] # 2D array
         self.at = []
 
