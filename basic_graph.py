@@ -10,6 +10,7 @@ class Node:
         self.is_activated = False
         self.in_links = []  # [link..]
         self.out_links = [] # touple: [](turn, link)..]
+        self.link_to_turn = dict()
 
         # For Dijkstra's algorithm
         self.arrival_time = float('inf')  # For Dijkstra node value
@@ -29,7 +30,7 @@ class Node:
         self.from_link = None
 
     def set_connect_to_intersection(self, intersection):
-        self.belong_to_intersection = intersection
+        self.connect_to_intersection = intersection
     def get_connect_to_intersection(self):
         return self.connect_to_intersection
 
@@ -57,6 +58,12 @@ class Node:
             return None
         else:
             return self.from_link.in_node
+
+    def add_out_links(self, turn, new_link):
+        self.out_links.append((turn,new_link))
+        self.link_to_turn[new_link] = turn
+    def get_turn_from_link(self, link):
+        return self.link_to_turn[link]
 
 
 
@@ -96,5 +103,6 @@ class Car:
         self.AT = AT
         self.position = position
         self.turning = None
-        self.path = []
+        self.path_node = []
+        self.path_link = []
         self.is_scheduled = 0

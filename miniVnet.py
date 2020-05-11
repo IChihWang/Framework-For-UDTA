@@ -1,7 +1,7 @@
  #coding=utf-8
 
 import math
-
+from basic_graph import Car
 from vehicle_map import Intersection, Road, Sink
 import itertools
 import heapq
@@ -96,8 +96,19 @@ class MiniVnet:
     def compile(self):
         self.is_compiled = True
 
+    # ==================== UDTA functions ==#==================== #
+
+    def udta(self, cars):
+        # TODO: convert car's current position to src_node & bias
+        '''
+        for car in cars:
+            self.dijkstra(car, src_node, car.dst_node, bias):
+        '''
+        # self.dijkstra(car)
+        # self.update_map(car)
 
     # =========== Use the DataStructure to route ====================== #
+    # Important: Not thread safe!! only allow one car routing at a time (because data structure)
     def dijkstra(self, car, src_node, dst_node, time_bias):
         # time_bias is the time bias for those on-the-fly cars, whose is not yet at the source node
 
@@ -123,7 +134,8 @@ class MiniVnet:
             # Update link cost by Roadrunner
             current_intersection = current_node.get_connect_to_intersection()
             if current_intersection != None:
-                current_intersection.get_cost_from_manager(current_arrival_time)
+
+                current_intersection.get_cost_from_manager(current_arrival_time, current_node)
 
             # visiting neighbors
             for turning, out_link in current_node.out_links:
@@ -156,14 +168,45 @@ class MiniVnet:
 
         # Trace back from destination to source
         tracing_node = dst_node
-        car.path.insert(0, tracing_node)
+        car.path_node.insert(0, tracing_node)
+        tracing_link = tracing_node.get_from_link()
 
-        while tracing_node.get_from_link() != None:
+        while tracing_link != None:
             tracing_node = tracing_node.get_from_node()
-            car.path.insert(0, tracing_node)
+            car.path_node.insert(0, tracing_node)
+            car.path_link.insert(0, tracing_link)
+            tracing_link = tracing_node.get_from_link()
 
-        for node in car.path:
+        assert car.path_link > 0, "The car cannot find the route"
+        # TODO: if rerouting: check if it increase global cost
+        #       if not: the route must be taken
+        for node in car.path_node:
             print(node, node.arrival_time)
+
+        for link in car.path_link:
+            print(link, link.id)
+
+    # =========== Update the cost with given path ====================== #
+    def update_map(self, car):
+        # path: in_node -----> (link) -----> out_node -----> (next_link)
+        for link_idx in range(len(car.path_link)-1):
+            link = car.path_link[link_idx]
+            next_link = car.path_link[link_idx+1]
+            in_node = car.path_node[link_idx]
+            out_node = car.path_node[link_idx+1]
+
+            # Only store the car info in the "road" (connected to the intersection)
+            if out_node.get_connect_to_intersection() != None:
+                # Get the turns from the node
+                turn = out_node.get_turn_from_link(next_link)
+                # compute the position on the link
+                on_link_start_idx = int(math.ceil(in_node.get_arrival_time()))
+                init_position = (in_node.get_arrival_time() - on_link_start_idx) * global_val.MAX_SPEED
+
+                # TO be decided
+                # on_link_start_idx = int(math.floor(out_node.get_arrival_time()))
+
+
     '''
 
     # =========== Use the DataStructure to route ====================== #

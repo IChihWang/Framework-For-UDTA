@@ -25,7 +25,7 @@ class Intersection:
                 source_node = self.in_nodes[i]
                 source_node.set_connect_to_intersection(self)
                 source_node.set_in_intersection_lane(i * num_lane)
-                source_node.out_links.append((k,new_link))
+                source_node.add_out_links(k, new_link)
                 new_link.in_node = source_node
 
                 sink_node = self.out_nodes[(i-1-k)%4]
@@ -57,10 +57,11 @@ class Intersection:
             self.in_nodes[i].initial_for_dijkstra()
             self.out_nodes[i].initial_for_dijkstra()
 
-    def get_cost_from_manager(self, arrival_time):
+    def get_cost_from_manager(self, arrival_time, node):
         # Call single intersection manager
         # Update the travel time (delay) on links within the intersection
-
+        node.get_in_intersection_lane()
+        # TODO: build a "new car"
         #for in_node in self.in_nodes:
 
 
@@ -90,6 +91,7 @@ class Road:
         self.num_lane = num_lane
         self.link_groups = [Link() for i in range(2)]
         self.components = [None for i in range(2)]
+        self.length = global_val.ROAD_LENGTH
 
     '''
     ------------------------
@@ -106,14 +108,14 @@ class Road:
             self.link_groups[0].in_node = in_nodes
             self.link_groups[1].out_node = out_nodes
 
-            in_nodes.out_links.append((global_val.STRAIGHT_TURN, self.link_groups[0]))
+            in_nodes.add_out_links(global_val.STRAIGHT_TURN, self.link_groups[0])
             out_nodes.in_links.append(self.link_groups[1])
         else:
             self.components[1] = component
             self.link_groups[1].in_node = in_nodes
             self.link_groups[0].out_node = out_nodes
 
-            in_nodes.out_links.append((global_val.STRAIGHT_TURN, self.link_groups[1]))
+            in_nodes.add_out_links(global_val.STRAIGHT_TURN, self.link_groups[1])
             out_nodes.in_links.append(self.link_groups[0])
 
 
