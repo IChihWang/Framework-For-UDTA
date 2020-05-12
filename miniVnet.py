@@ -1,19 +1,21 @@
 import math
-
-from basicGraph import NODE, LINK, Car
 import itertools
+import heapq
+from basicGraph import NODE, LINK, Car
+from IntersectionManager import IntersectionManager
 
 inf = float('inf')
 
 
 class INTERSECTION:
     def __init__(self, name, num_lane):
+        self.intersection_manager = IntersectionManager()
         self.name = name
         self.num_lane = num_lane
         self.components = [None for i in range(4)]
         self.direction_nodes = [[[NODE() for k in range(num_lane)] for j in range(2)] for i in range(4)]
-        # self.new_link = []
-        self.new_link = [[[LINK(self) for k in range(3)] for j in range(num_lane)] for i in range(4)]
+        turning = ['L', 'S', 'R']
+        self.new_link = [[[LINK(self, None, k) for k in turning] for j in range(num_lane)] for i in range(4)]
         # Allocate links to nodes
         for i in range(4):
             for j in range(num_lane):
@@ -59,7 +61,7 @@ class INTERSECTION:
 class ROAD:
     def __init__(self, num_lane):
         self.num_lane = num_lane
-        self.link_groups = [[LINK() for j in range(num_lane)] for i in range(2)]
+        self.link_groups = [[LINK(None, self, '_') for j in range(num_lane)] for i in range(2)]
         self.components = [None for i in range(2)]
 
     def connect(self, component, in_nodes, out_nodes):
@@ -239,23 +241,38 @@ class MINIVNET:
         for node in start_nodes:
             node.setValue(0)
 
-        self.node_list = []
+        node_list = []
+        heapq.heapify(node_list)
+        visited = set()
         for snode in start_nodes:
-            self.node_list.append(snode)
+            heapq.heappush(snode, snode)
         # algorithm. Check the dictionary is empty or note
-        while self.node_list:
+        while node_list:
             # Greedy. Loeset node for this
-            node = self.node_list.pop()
+            node = heapq.heappop(node_list)
+
+            if node in visited:
+                continue
+            visited.add(node)
+
             time = node.value
             for out_edge in node.out_links:
                 out_node = self.getNode(out_edge)
                 for _ in range(math.ceil(time - 9)):
                     # append a constant value: 1
                     out_edge.cost.append(0)
-                self.next_time = node.value + out_edge.cost[math.ceil(time)]
-                if self.next_time < out_node.value:
-                    out_node.setValue(self.next_time)
-                    self.node_list.append(out_node)
+
+                # Two cases: Intersection or Road
+                # TODO: update cars list in routing
+                """
+                if out_edge.intersection:
+                    out_edge.cost = out_edge.intersection.intersection_manager.run(cars, car_id)
+                """
+
+                next_time = node.value + out_edge.cost[math.ceil(time)]
+                if next_time < out_node.value:
+                    out_node.setValue(next_time)
+                    heapq.heappush(node_list, out_node)
                     self.from_node[out_node] = node
                     self.from_edge[out_node] = out_edge
             self.car_timestamp[node] = node.value

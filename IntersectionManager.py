@@ -4,6 +4,7 @@ import config as cfg
 import traci
 import threading
 import random
+import itertools
 
 
 from Cars import Car
@@ -12,8 +13,10 @@ from LaneAdviser import LaneAdviser
 
 
 class IntersectionManager:
-    def __init__(self, my_id):
-        self.ID = my_id
+    new_id = itertools.count(0)
+
+    def __init__(self):
+        self.ID = next(self.new_id)
         self.az_list = dict()
         self.pz_list = dict()
         self.ccz_list = dict()
@@ -59,7 +62,6 @@ class IntersectionManager:
 
 
     def run(self, cars, index_of_target_car):
-
         # Cars: list of cars around the intersection
         # index_of_target_car: index of the target car in the list
 

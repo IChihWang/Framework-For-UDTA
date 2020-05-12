@@ -20,11 +20,14 @@ class NODE:
     def __repr__(self):
         return '{} {}'.format(self.__class__.__name__, self.id)
 
+    def __lt__(self, other):
+        return self.value < other.value
+
 
 class LINK:
     newid = itertools.count(0)
 
-    def __init__(self, intersection):
+    def __init__(self, intersection, road, direction):
         self.id = next(self.newid)
         self.in_node = None
         self.out_node = None
@@ -33,6 +36,8 @@ class LINK:
         self.cost = list(np.random.uniform(low=0.1, high=10, size=10))
         self.at = []
         self.intersection = intersection
+        self.road = road
+        self.direction = direction  # L: Left, S: Straight, R: Right, _: Road
 
 
     def updateCost(self, value):
@@ -50,5 +55,6 @@ class Car:
         self.AT = AT
         self.position = position
         self.turning = None
+        self.lane = None
         self.path = []
         self.is_scheduled = 0
