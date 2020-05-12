@@ -83,7 +83,9 @@ class Link:
         # self.cost = [int(np.random.randint(10, size=1)) for _ in range(10)]
         # self.traveling_time = list(np.random.uniform(low=1, high=3, size=20))
         #self.traveling_time = [0 for _ in range(5)]
-        self.traveling_time = 0
+        #TODO: change the traveling time
+        #self.traveling_time = 0 # Constant, traveling time in maximum speed
+        self.traveling_time = np.random.uniform(low=1, high=10)
         self.delay = [0 for _ in range(5)]
         self.car_data_base = [[] for _ in range(5)] # 2D array
         self.at = []
@@ -100,11 +102,11 @@ class Link:
 class Car:
     #new_id = itertools.count(0)
 
-    def __init__(self, car_id, AT, position):
-        self.id = car_id
-        self.AT = AT
-        self.position = position
+    def __init__(self):
+        self.id = None
+        self.arriving_time = None
+        self.position = None
         self.turning = None
         self.path_node = []
         self.path_link = []
-        self.is_scheduled = 0
+        self.is_scheduled = None

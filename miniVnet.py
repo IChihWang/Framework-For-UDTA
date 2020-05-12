@@ -132,10 +132,15 @@ class MiniVnet:
                 current_node.set_is_visited(True)
 
             # Update link cost by Roadrunner
-            current_intersection = current_node.get_connect_to_intersection()
-            if current_intersection != None:
+            # update when the car is on the road, store the result within the intersection
+            # Be aware of the time stemp!!!
+            if len(current_node.out_links) > 0:
+                turning, out_link = current_node.out_links[0]
+                next_node = out_link.out_node
 
-                current_intersection.get_cost_from_manager(current_arrival_time, current_node)
+                next_intersection = next_node.get_connect_to_intersection()
+                if next_intersection != None:
+                    next_intersection.get_cost_from_manager(current_arrival_time, current_node)
 
             # visiting neighbors
             for turning, out_link in current_node.out_links:
@@ -188,6 +193,8 @@ class MiniVnet:
 
     # =========== Update the cost with given path ====================== #
     def update_map(self, car):
+        # the time_bias is included during routing
+
         # path: in_node -----> (link) -----> out_node -----> (next_link)
         for link_idx in range(len(car.path_link)-1):
             link = car.path_link[link_idx]
@@ -196,16 +203,55 @@ class MiniVnet:
             out_node = car.path_node[link_idx+1]
 
             # Only store the car info in the "road" (connected to the intersection)
+            # next_link: links inside the intersection
             if out_node.get_connect_to_intersection() != None:
                 # Get the turns from the node
                 turn = out_node.get_turn_from_link(next_link)
+
                 # compute the position on the link
-                on_link_start_idx = int(math.ceil(in_node.get_arrival_time()))
-                init_position = (in_node.get_arrival_time() - on_link_start_idx) * global_val.MAX_SPEED
+                enter_link_time = in_node.get_arrival_time()
+                enter_link_time_idx = int(math.floor(enter_link_time))
+                init_position = (in_node.get_arrival_time() - enter_link_time_idx) * global_val.MAX_SPEED
 
-                # TO be decided
-                # on_link_start_idx = int(math.floor(out_node.get_arrival_time()))
+                # compute the traveling time
+                delay = next_link.delay[enter_link_time_idx]
+                actual_travel_time = link.traveling_time + delay
 
+                # expend the list size if not enough
+                if len(link.car_data_base) - 1 < enter_link_time_idx:
+                    for _ in range(enter_link_time_idx-(len(link.car_data_base) - 1)):
+                        link.car_data_base.append([])
+
+                print("==========")
+                print(enter_link_time)
+                # 1. add the car into the database "unscheduled"
+                unscheduled_copy_car = Car()
+                unscheduled_copy_car.id = car.id
+                unscheduled_copy_car.position = init_position
+                unscheduled_copy_car.turning = turn
+                unscheduled_copy_car.is_scheduled = False
+                link.car_data_base[enter_link_time_idx] = unscheduled_copy_car
+
+
+                # 2. add the future car into the database "scheduled"
+                current_time_step = 1
+                remaining_actual_travel_time = actual_travel_time - current_time_step
+                while remaining_actual_travel_time >= 0:
+                    current_time_idx = int(math.floor(enter_link_time + current_time_step))
+                    if len(link.car_data_base) - 1 < current_time_idx:
+                        link.car_data_base.append([])
+
+                    scheduled_copy_car = Car()
+                    scheduled_copy_car.id = car.id
+                    scheduled_copy_car.arriving_time = remaining_actual_travel_time
+                    scheduled_copy_car.turning = turn
+                    scheduled_copy_car.is_scheduled = True
+                    link.car_data_base[current_time_idx] = scheduled_copy_car
+
+                    current_time_step = current_time_step+1
+                    remaining_actual_travel_time = actual_travel_time - current_time_step
+
+                
 
     '''
 

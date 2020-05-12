@@ -75,7 +75,8 @@ if __name__ == '__main__':
 
     #print(my_net.sinks[0].out_nodes[0].out_links)
 
-    car = Car(0, 1, 2)
+    car = Car()
+    car.id = "hello_car"
     src_node = my_net.sinks[0].out_nodes
     dst_node = my_net.sinks[4].in_nodes
     my_net.dijkstra(car, src_node, dst_node, 1)
