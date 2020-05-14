@@ -18,6 +18,7 @@ import random
 import numpy as np
 
 from basic_graph import Car
+import math
 
 random.seed(0)
 np.random.seed(0)
@@ -75,12 +76,47 @@ if __name__ == '__main__':
 
     #print(my_net.sinks[0].out_nodes[0].out_links)
 
-    car = Car()
-    car.id = "hello_car"
-    src_node = my_net.sinks[0].out_nodes
-    dst_node = my_net.sinks[4].in_nodes
-    my_net.dijkstra(car, src_node, dst_node, 1)
-    my_net.update_map(car)
+    car_list = []
+    car_num = 100
+    for idx in range(car_num):
+        car = Car()
+        car.id = "car_" + str(idx)
+
+        src_node_idx = random.randrange(0,8)
+        dst_node_idx = src_node_idx
+        while src_node_idx == dst_node_idx:
+            dst_node_idx = random.randrange(0,8)
+
+        car.src_node = my_net.sinks[src_node_idx].out_nodes
+        car.dst_node = my_net.sinks[dst_node_idx].in_nodes
+        car_list.append(car)
+
+
+    # round robbin x 5 times
+    for _ in range(10):
+        total_cost = 0
+        for car in car_list:
+            saved_path = car.path_node
+
+            # clear car from the database
+            my_net.remove_car_route(car)
+
+            my_net.dijkstra(car, car.src_node, car.dst_node, 0)
+            my_net.update_map(car)
+
+
+            total_cost += car.traveling_time
+            #'''
+            if saved_path != car.path_node and saved_path != []:
+                print(car.id, car.path_node)
+            #'''
+
+            '''
+            if car.id == "car_13":
+                print(car.path_node)
+            #'''
+
+        print("=============", total_cost/car_num)
 
 
 

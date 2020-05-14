@@ -5,6 +5,7 @@ import math
 from basic_graph import Node, Link, Car
 import itertools
 import global_val
+import numpy as np
 
 class Intersection:
     def __init__(self, name, num_lane):
@@ -21,11 +22,12 @@ class Intersection:
         for i in range(4):
             for k in range(3):  # left, straight, right
                 new_link = Link()
-
+                new_link.traveling_time = np.random.uniform(low=1, high=20)
                 source_node = self.in_nodes[i]
                 source_node.set_connect_to_intersection(self)
                 source_node.set_in_intersection_lane(i * num_lane)
                 source_node.add_out_links(k, new_link)
+                source_node.id = 'inter_' + str(source_node.id)
                 new_link.in_node = source_node
 
                 sink_node = self.out_nodes[(i-1-k)%4]
@@ -57,15 +59,37 @@ class Intersection:
             self.in_nodes[i].initial_for_dijkstra()
             self.out_nodes[i].initial_for_dijkstra()
 
+        for link in self.links:
+            link.delay = [0 for _ in range(5)]
+
     def get_cost_from_manager(self, arrival_time, node):
         # Call single intersection manager
         # Update the travel time (delay) on links within the intersection
-        node.get_in_intersection_lane()
-        # TODO: build a "new car"
-        #for in_node in self.in_nodes:
+
+        # Set delay to zeros
+        for turning, link in node.out_links:
+            # Check if there is a record of the traveling_time
+            if len(link.delay)-1 < int(math.floor(arrival_time)):
+                for _ in range(int(math.floor(arrival_time))-(len(link.delay)-1)):
+                    link.delay.append(0)
+            else:
+                pass
+
+            # The 1 is the current car
+            link.delay[int(math.floor(arrival_time))] = 1
+
+        in_links = node.in_links[0]
+
+        if (len(in_links.car_data_base) > int(math.floor(arrival_time))):
+
+            for car in in_links.car_data_base[int(math.floor(arrival_time))]:
+
+                turning = car.turning
+                # increase the delay by 1
+                _, link = node.out_links[turning]
+                link.delay[int(math.floor(arrival_time))] = link.delay[int(math.floor(arrival_time))] + 1
 
 
-        pass
 
     def print_node_arrival_time(self):
         # For debugging
