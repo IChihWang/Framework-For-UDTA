@@ -25,7 +25,7 @@ np.random.seed(0)
 
 if __name__ == '__main__':
     my_net = MiniVnet()
-
+    '''
     i1 = my_net.addIntersection('I1', 3)
     i2 = my_net.addIntersection('I2', 3)
     i3 = my_net.addIntersection('I3', 3)
@@ -55,8 +55,10 @@ if __name__ == '__main__':
 
     my_net.connect(i4, 1, s4, 0)
     my_net.connect(i4, 0, s5, 0)
-
     my_net.compile()
+    '''
+
+    my_net.createGridNetwork(10, 1)
 
     '''
     i1.print_details()
@@ -93,8 +95,9 @@ if __name__ == '__main__':
 
 
     # round robbin x 5 times
-    for _ in range(10):
+    for _ in range(1):
         total_cost = 0
+        path_diff_count = 0
         for car in car_list:
             saved_path = car.path_node
 
@@ -108,14 +111,15 @@ if __name__ == '__main__':
             total_cost += car.traveling_time
             #'''
             if saved_path != car.path_node and saved_path != []:
-                print(car.id, car.path_node)
+                #print(car.id, car.path_node)
+                path_diff_count += 1
             #'''
 
             '''
             if car.id == "car_13":
                 print(car.path_node)
             #'''
-
+        print(path_diff_count)
         print("=============", total_cost/car_num)
 
 
