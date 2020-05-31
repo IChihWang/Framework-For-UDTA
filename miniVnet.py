@@ -163,13 +163,13 @@ class MiniVnet:
                     neighbor_node.set_from_link(out_link)
                     heapq.heappush(unvisited_queue, (arriving_neighbor_time, neighbor_node))
 
-        #'''
+        '''
         for intersection in self.intersections:
             intersection.print_node_arrival_time()
         print("============================")
         for sink in self.sinks:
             sink.print_node_arrival_time()
-        #'''
+        '''
 
         # Trace back from destination to source
         tracing_node = dst_node
@@ -180,17 +180,46 @@ class MiniVnet:
             tracing_node = tracing_node.get_from_node()
             car.path_node.insert(0, tracing_node)
             car.path_link.insert(0, tracing_link)
+            car.path_time.insert(0, tracing_node.arrival_time)
             tracing_link = tracing_node.get_from_link()
-
-        assert car.path_link > 0, "The car cannot find the route"
+        
+        #assert car.path_link > 0, "The car cannot find the route"
         # TODO: if rerouting: check if it increase global cost
         #       if not: the route must be taken
-        for node in car.path_node:
-            print(node, node.arrival_time)
+        # for node in car.path_node:
+        #     print(node, node.arrival_time)
+        #print(car.path_node)
+        return car.path_node
+        #for link in car.path_link:
+        #    print(link, link.id)
 
-        for link in car.path_link:
-            print(link, link.id)
-
+    def dummy_update_map(self, car):
+        for link_idx in range(len(car.path_link)-1):
+            link = car.path_link[link_idx]
+            next_link = car.path_link[link_idx+1]
+            in_node = car.path_node[link_idx]
+            out_node = car.path_node[link_idx+1]
+            if out_node.get_connect_to_intersection() != None:
+                enter_link_time = car.path_time[link_idx]
+                enter_link_time_idx = int(math.floor(enter_link_time))
+                exit_link_time = car.path_time[link_idx+1]
+                exit_link_time_idx = int(math.floor(exit_link_time))
+                for kk in range(enter_link_time_idx,exit_link_time_idx+1):
+                    next_link.delay[kk] += 18
+    def dummy_reset_map(self,car):
+        for link_idx in range(len(car.path_link)-1):
+            link = car.path_link[link_idx]
+            next_link = car.path_link[link_idx+1]
+            in_node = car.path_node[link_idx]
+            out_node = car.path_node[link_idx+1]
+            if out_node.get_connect_to_intersection() != None:
+                enter_link_time = car.path_time[link_idx]
+                enter_link_time_idx = int(math.floor(enter_link_time))
+                exit_link_time = car.path_time[link_idx+1]
+                exit_link_time_idx = int(math.floor(exit_link_time))
+                for kk in range(enter_link_time_idx,exit_link_time_idx+1):
+                    next_link.delay[kk] -= 18
+        
     # =========== Update the cost with given path ====================== #
     def update_map(self, car):
         # the time_bias is included during routing

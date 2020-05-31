@@ -109,4 +109,5 @@ class Car:
         self.turning = None
         self.path_node = []
         self.path_link = []
+        self.path_time = []
         self.is_scheduled = None

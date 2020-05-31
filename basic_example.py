@@ -5,6 +5,14 @@
 #   s7    i3  i4    s4
 #
 #         s6  s5
+# Create a network as following:
+#         s1  s2  s3
+#
+#   s12   i1  i2  i3   s4
+#   s11   i4  i5  i6   s5
+#   s10   i7  i8  i9   s6
+#         
+#         s9  s8  s7
 #
 # Index of the initersection:
 #       1
@@ -12,15 +20,65 @@
 #       3
 #
 
-
+import time
 from miniVnet import MiniVnet
 import random
 import numpy as np
 
 from basic_graph import Car
 
-random.seed(0)
-np.random.seed(0)
+random.seed(1)
+np.random.seed(1)
+
+def testDijkstra(round_number, car_number):
+    tic = time.process_time()
+
+    start = []
+    end = []
+    for i in range(car_number):
+        a = random.sample(range(0,6),1)[0]
+        start.append(a)
+        end.append(7)
+    #print(my_net.sinks[0].out_nodes[0].out_links)
+    
+    carlist = []
+    testpath = []
+    for i in range(car_number):
+        car = Car()
+        car.id = 'Car'+str(i)
+        print('-----routing for',car.id,'-----')
+        src_node = my_net.sinks[start[i]].out_nodes
+        dst_node = my_net.sinks[end[i]].in_nodes
+        path = my_net.dijkstra(car, src_node, dst_node, 1)
+        if i == 0:
+            testpath.append(path)
+        carlist.append(car)
+        #for link in car.path_link:
+        #    print(link.id)
+        my_net.dummy_update_map(car)
+    ttpath = []
+    for k in range(round_number):
+        print('======= round ', k, '=============')
+        for i in range(car_number):
+            car = carlist[i]
+            print('------reroute for',car.id,'--------')
+            my_net.dummy_reset_map(car)
+            src_node = my_net.sinks[start[i]].out_nodes
+            dst_node = my_net.sinks[end[i]].in_nodes
+            car.path_time = []
+            car.path_node = []
+            car.path_link = []
+            path = my_net.dijkstra(car, src_node, dst_node, 1)
+            if i == 0:
+                ttpath.append(path)
+            my_net.dummy_update_map(car)
+    toc = time.process_time()
+
+    print('time',toc-tic)
+    print('originial:',testpath)
+    print('reroute:',ttpath)
+
+
 
 if __name__ == '__main__':
     my_net = MiniVnet()
@@ -29,6 +87,12 @@ if __name__ == '__main__':
     i2 = my_net.addIntersection('I2', 3)
     i3 = my_net.addIntersection('I3', 3)
     i4 = my_net.addIntersection('I4', 3)
+    i5 = my_net.addIntersection('I5', 3)
+    i6 = my_net.addIntersection('I6', 3)
+    i7 = my_net.addIntersection('I7', 3)
+    i8 = my_net.addIntersection('I8', 3)
+    i9 = my_net.addIntersection('I9', 3)
+
 
     s1 = my_net.addSink('S1', 3)
     s2 = my_net.addSink('S2', 3)
@@ -38,6 +102,10 @@ if __name__ == '__main__':
     s6 = my_net.addSink('S6', 3)
     s7 = my_net.addSink('S7', 3)
     s8 = my_net.addSink('S8', 3)
+    s9 = my_net.addSink('S9', 3)
+    s10 = my_net.addSink('S10', 3)
+    s11 = my_net.addSink('S11', 3)
+    s12 = my_net.addSink('S12', 3)
 
     my_net.connect(i1, 3, s8, 0)
     my_net.connect(i1, 2, s1, 0)
@@ -72,15 +140,16 @@ if __name__ == '__main__':
     s7.print_details()
     s8.print_details()
     '''
+    #testDijkstra(3,20)
+    #testDijkstra(4,36)
+    #testDijkstra(5,72)
+    #testDijkstra(6,80)
+    #testDijkstra(7,80)
+    #testDijkstra(8,85)
+    testDijkstra(9,85)
 
-    #print(my_net.sinks[0].out_nodes[0].out_links)
 
-    car = Car()
-    car.id = "hello_car"
-    src_node = my_net.sinks[0].out_nodes
-    dst_node = my_net.sinks[4].in_nodes
-    my_net.dijkstra(car, src_node, dst_node, 1)
-    my_net.update_map(car)
+    
 
 
 
