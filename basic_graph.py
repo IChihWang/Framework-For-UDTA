@@ -3,31 +3,19 @@ import numpy as np
 
 
 class Node:
-    newid = itertools.count(0)
-
-    def __init__(self):
-        self.id = next(self.newid)
+    def __init__(self, id):
+        self.id = id
         self.is_activated = False
         self.in_links = []  # [link..]
         self.out_links = [] # touple: [](turn, link)..]
         self.link_to_turn = dict()
 
-        # For Dijkstra's algorithm
-        self.arrival_time = float('inf')  # For Dijkstra node value
-        self.is_visited = False
-        self.from_link = None
 
         # Variable for connecting to intersection manager
         self.connect_to_intersection = None
         self.in_intersection_lane = None
 
 
-
-    # Methods for Dijkstra's algorithm
-    def initial_for_dijkstra(self):
-        self.arrival_time = float('inf')
-        self.is_visited = False
-        self.from_link = None
 
     def set_connect_to_intersection(self, intersection):
         self.connect_to_intersection = intersection
@@ -39,15 +27,6 @@ class Node:
     def get_in_intersection_lane(self):
         return self.in_intersection_lane
 
-    def set_is_visited(self, is_visited):
-        self.is_visited = is_visited
-    def get_is_visited(self):
-        return self.is_visited
-
-    def set_arrival_time(self, arrival_time):
-        self.arrival_time = arrival_time
-    def get_arrival_time(self):
-        return self.arrival_time
 
     def set_from_link(self, from_link):
         self.from_link = from_link

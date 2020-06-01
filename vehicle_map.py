@@ -11,8 +11,8 @@ class Intersection:
         self.name = name
         self.num_lane = num_lane
         self.components = [None for i in range(4)]
-        self.in_nodes = [Node() for i in range(4)]
-        self.out_nodes = [Node() for i in range(4)]
+        self.in_nodes = [Node(str(name)+"_i_"+str(i)) for i in range(4)]
+        self.out_nodes = [Node(str(name)+"_o_"+str(i)) for i in range(4)]
         #self.direction_nodes = [[[Node() for k in range(num_lane)] for j in range(2)] for i in range(4)]
         self.links = []
         #self.new_link = [[[Link() for k in range(3)] for j in range(num_lane)] for i in range(4)]
@@ -52,10 +52,15 @@ class Intersection:
 
         assert len(component_list) > 2, "Error: intersection " + str(self.name) + " has too few connections."
 
-    def initial_for_dijkstra(self):
+    def initial_for_dijkstra(self, nodes_arrival_time, nodes_from_link, nodes_is_visit):
         for i in range(4):
-            self.in_nodes[i].initial_for_dijkstra()
-            self.out_nodes[i].initial_for_dijkstra()
+            nodes_arrival_time[self.in_nodes[i].id] = float('inf')
+            nodes_from_link[self.in_nodes[i].id] = None
+            nodes_is_visit[self.in_nodes[i].id] = False
+
+            nodes_arrival_time[self.out_nodes[i].id] = float('inf')
+            nodes_from_link[self.out_nodes[i].id] = None
+            nodes_is_visit[self.out_nodes[i].id] = False
 
     def get_cost_from_manager(self, arrival_time, node):
         # Call single intersection manager
@@ -141,8 +146,8 @@ class Sink:
         self.name = name
         self.num_lane = num_lane
         #self.node_groups = [[Node() for i in range(num_lane)] for i in range(2)]
-        self.in_nodes = Node()
-        self.out_nodes = Node()
+        self.in_nodes = Node(str(name)+"_i_0")
+        self.out_nodes = Node(str(name)+"_o_0")
         self.components = None
         self.id = next(Sink.newid)
 
@@ -159,9 +164,14 @@ class Sink:
         road.connect(self, self.out_nodes, self.in_nodes)
 
 
-    def initial_for_dijkstra(self):
-        self.in_nodes.initial_for_dijkstra()
-        self.out_nodes.initial_for_dijkstra()
+    def initial_for_dijkstra(self, nodes_arrival_time, nodes_from_link, nodes_is_visit):
+        nodes_arrival_time[self.in_nodes.id] = float('inf')
+        nodes_from_link[self.in_nodes.id] = None
+        nodes_is_visit[self.in_nodes.id] = False
+
+        nodes_arrival_time[self.out_nodes.id] = float('inf')
+        nodes_from_link[self.out_nodes.id] = None
+        nodes_is_visit[self.out_nodes.id] = False
 
     def print_node_arrival_time(self):
         # For debugging
