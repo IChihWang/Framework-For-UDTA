@@ -246,7 +246,7 @@ class MiniVnet:
                 unscheduled_copy_car.position = init_position
                 unscheduled_copy_car.turning = turn
                 unscheduled_copy_car.is_scheduled = False
-                link.car_data_base[enter_link_time_idx] = unscheduled_copy_car
+                link.car_data_base[enter_link_time_idx].append(unscheduled_copy_car)
 
 
                 # 2. add the future car into the database "scheduled"
@@ -262,7 +262,7 @@ class MiniVnet:
                     scheduled_copy_car.arriving_time = remaining_actual_travel_time
                     scheduled_copy_car.turning = turn
                     scheduled_copy_car.is_scheduled = True
-                    link.car_data_base[current_time_idx] = scheduled_copy_car
+                    link.car_data_base[current_time_idx].append(scheduled_copy_car)
 
                     current_time_step = current_time_step+1
                     remaining_actual_travel_time = actual_travel_time - current_time_step
