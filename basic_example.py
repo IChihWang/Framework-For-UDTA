@@ -81,6 +81,9 @@ if __name__ == '__main__':
     dst_node = my_net.sinks[4].in_nodes
     my_net.dijkstra(car, src_node, dst_node, 1)
     my_net.update_map(car)
+    print(car.recorded_in_database)
+
+    my_net.choose_car([car])
 
 
 

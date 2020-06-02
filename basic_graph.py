@@ -64,7 +64,8 @@ class Link:
         #self.traveling_time = [0 for _ in range(5)]
         #TODO: change the traveling time
         #self.traveling_time = 0 # Constant, traveling time in maximum speed
-        self.traveling_time = np.random.uniform(low=1, high=10)
+        #self.traveling_time = np.random.uniform(low=1, high=10)
+        self.traveling_time = 0.5
         self.delay = [0 for _ in range(5)]
         self.car_data_base = [[] for _ in range(5)] # 2D array
         self.at = []
@@ -83,9 +84,14 @@ class Car:
 
     def __init__(self):
         self.id = None
+
+        # For routing
+        self.path_node = []
+        self.path_link = []
+        self.recorded_in_database = dict()  # {"link":link, "time_car":[(time, car)]}
+        self.is_scheduled = None
+
+        # For recording in the database
         self.arriving_time = None
         self.position = None
         self.turning = None
-        self.path_node = []
-        self.path_link = []
-        self.is_scheduled = None

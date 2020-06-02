@@ -107,6 +107,23 @@ class MiniVnet:
         # self.dijkstra(car)
         # self.update_map(car)
 
+    def choose_car(self, cars):
+        # Choose Cars
+        # TODO: dummy function
+        chosen_cars = [cars[0]]
+
+        for car in chosen_cars:
+            # Remove car from the databases
+            for link_id, car_record in car.recorded_in_database.items():
+                link = car_record["link"]
+                time_cars = car_record["time_car"]
+                for time_idx, copied_car in time_cars:
+                    link.car_data_base[time_idx].remove(copied_car)
+            # Clear paths
+            car.path_node = []
+            car.path_link = []
+
+
     # =========== Use the DataStructure to route ====================== #
     # Important: Not thread safe!! only allow one car routing at a time (because data structure)
     def dijkstra(self, car, src_node, dst_node, time_bias):
@@ -223,6 +240,9 @@ class MiniVnet:
             # Only store the car info in the "road" (connected to the intersection)
             # next_link: links inside the intersection
             if out_node.get_connect_to_intersection() != None:
+                # Record which database is added with the car
+                car.recorded_in_database[link.id] = {"link":link, "time_car":[]}
+
                 # Get the turns from the node
                 turn = out_node.get_turn_from_link(next_link)
 
@@ -247,6 +267,7 @@ class MiniVnet:
                 unscheduled_copy_car.turning = turn
                 unscheduled_copy_car.is_scheduled = False
                 link.car_data_base[enter_link_time_idx].append(unscheduled_copy_car)
+                car.recorded_in_database[link.id]["time_car"].append((enter_link_time_idx,unscheduled_copy_car))
 
 
                 # 2. add the future car into the database "scheduled"
@@ -263,6 +284,7 @@ class MiniVnet:
                     scheduled_copy_car.turning = turn
                     scheduled_copy_car.is_scheduled = True
                     link.car_data_base[current_time_idx].append(scheduled_copy_car)
+                    car.recorded_in_database[link.id]["time_car"].append((current_time_idx,scheduled_copy_car))
 
                     current_time_step = current_time_step+1
                     remaining_actual_travel_time = actual_travel_time - current_time_step
