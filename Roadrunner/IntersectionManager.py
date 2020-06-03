@@ -94,10 +94,10 @@ class IntersectionManager:
         # Update the table for the lane advising
         self.lane_advisor.updateTableFromCars(sched_car, advised_n_sched_car)
 
-        for turning_str in ['R', 'S', 'L']:
+        for turning in [global_val.RIGHT_TURN, global_val.STRAIGHT_TURN, global_val.LEFT_TURN]:
             target_car = cars[index_of_target_car]
             # Assign the turning to the car
-            target_car.turning = turning_str
+            target_car.turning = turning
 
             # Line advise
             advised_lane = self.lane_advisor.adviseLane(target_car)
@@ -109,20 +109,7 @@ class IntersectionManager:
 
             # Do the scheduling
             delay_results = Roadrunner(sched_car, n_sched_car, delay_list, OT_list)
-
-            turning_delay[turning_str] = delay_results
-            lane_results[turning_str] = target_car.lane
+            turning_delay[turning] = delay_results
+            lane_results[turning] = target_car.lane
 
         return (turning_delay, lane_results)
-
-
-    def turn_to_str(self, turn):
-        turn_str = ""
-        if turn == global_val.LEFT_TURN:
-            turn_str = "L"
-        elif turn == global_val.STRAIGHT_TURN:
-            turn_str = "S"
-        elif turn == global_val.RIGHT_TURN:
-            turn_str = "R"
-
-        return turn_str

@@ -84,12 +84,10 @@ class Intersection:
         turning_delay, lane_results = intersection_manager.run(all_cars, 0)
 
         for link, turn in node.link_to_turn.items():
-            turn_str = intersection_manager.turn_to_str(turn)
-
-            delay_results = turning_delay[turn_str]
+            delay_results = turning_delay[turn]
             delay = delay_results[new_car.id]
             links_delay[link.id] = delay
-            links_lane[link.id] = lane_results[turn_str]
+            links_lane[link.id] = lane_results[turn]
             links_delay_record = delay_results
 
 

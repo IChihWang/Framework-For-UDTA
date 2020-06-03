@@ -10,6 +10,7 @@ NODE_IDX = 1
 
 # Variable
 MAX_SPEED = 11.18    #25mph
+TURN_SPEED = 10.0    #25mph
 ROAD_LENGTH = 200
 # TODO: change (sync) the one in Roadrunner
 # TODO: actual travel time vs. scheduling time

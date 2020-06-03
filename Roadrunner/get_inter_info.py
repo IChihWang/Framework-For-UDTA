@@ -2,6 +2,7 @@ import json
 import copy
 
 import config as cfg
+import global_val
 
 
 #def main():
@@ -14,37 +15,6 @@ class Data:
         with open('./Roadrunner/inter_info/lane_info'+str(cfg.LANE_NUM_PER_DIRECTION)+'.json', 'r') as file:
             self.tau = json.load(file)
 
-    '''
-    def getConflictRegion(self, l1, d1, l2, d2):
-        reverse_flag = False
-        LANE_NUM_PER_DIRECTION = 2
-
-        if (l1 > l2):
-            l2, l1 = l1, l2
-            d2, d1 = d1, d2
-            reverse_flag = True
-
-        # rotate to corresponding cases
-        if l1 >= LANE_NUM_PER_DIRECTION:
-            l2 = (l2 - (l1//LANE_NUM_PER_DIRECTION)*LANE_NUM_PER_DIRECTION) % (LANE_NUM_PER_DIRECTION*4)
-            l1 = (l1 - (l1//LANE_NUM_PER_DIRECTION)*LANE_NUM_PER_DIRECTION)
-
-
-        # Test if there is conflict between l1 & l2
-        # and give the conflict region.
-
-        test_str = str(l1) + d1 + str(l2) + d2
-
-        if (test_str) in self.tau:
-            ans = copy.deepcopy(self.tau[test_str])
-            if (reverse_flag):
-                ans[0], ans[1] = ans[1], ans[0]
-
-            # lane 1 intersects with lane 2
-            return ans
-        else:
-            return []
-    '''
 
 
     def getConflictRegion(self, car1, car2):
@@ -67,23 +37,23 @@ class Data:
         # Test if there is conflict between l1 & l2
         # and give the conflict region.
 
-        test_str = str(l1) + car1.turning + str(l2) + car2.turning
+        test_str = str(l1) + self.turn_to_str(car1.turning) + str(l2) + self.turn_to_str(car2.turning)
 
         if (test_str) in self.tau:
             val = self.tau[test_str].copy()
 
             # 0. Flip Xd, Yd if two car turn left from opposite directions
-            if (l2 >= cfg.LANE_NUM_PER_DIRECTION*2 and l2 < cfg.LANE_NUM_PER_DIRECTION*3) and (car1.turning == 'L' and car2.turning == 'L'):
+            if (l2 >= cfg.LANE_NUM_PER_DIRECTION*2 and l2 < cfg.LANE_NUM_PER_DIRECTION*3) and (self.turn_to_str(car1.turning) == 'L' and self.turn_to_str(car2.turning) == 'L'):
                 val['Xm'], val['Xd'] = val['Xd'], val['Xm']
 
 
             # 1. Compute tau_S1_S2
             tau_S1_S2 = None
             # --- case 1: from Xm, Ym
-            ans1 = (val['Xm']+car1.length+cfg.HEADWAY)/car1.speed_in_intersection - (val['Ym'])/car2.speed_in_intersection+cfg.DISTANCE*cfg.LANE_WIDTH/car1.speed_in_intersection
+            ans1 = (val['Xm']+car1.length+cfg.HEADWAY)/self.get_speed_in_intersection(car1.turning) - (val['Ym'])/self.get_speed_in_intersection(car2.turning)+cfg.DISTANCE*cfg.LANE_WIDTH/self.get_speed_in_intersection(car1.turning)
 
             # --- case 2: from Xd, Yd
-            ans2 = (val['Xd']+car1.length+cfg.HEADWAY)/car1.speed_in_intersection - (val['Yd'])/car2.speed_in_intersection+cfg.DISTANCE*cfg.LANE_WIDTH/car1.speed_in_intersection
+            ans2 = (val['Xd']+car1.length+cfg.HEADWAY)/self.get_speed_in_intersection(car1.turning) - (val['Yd'])/self.get_speed_in_intersection(car2.turning)+cfg.DISTANCE*cfg.LANE_WIDTH/self.get_speed_in_intersection(car1.turning)
 
             tau_S1_S2 = max(ans1, ans2)
 
@@ -93,10 +63,10 @@ class Data:
             # 2. Compute tau_S2_S1
             tau_S2_S1 = None
             # --- case 1: from Xm, Ym
-            ans1 = (val['Ym']+car2.length+cfg.HEADWAY)/car2.speed_in_intersection - (val['Xm'])/car1.speed_in_intersection+cfg.DISTANCE*cfg.LANE_WIDTH/car2.speed_in_intersection
+            ans1 = (val['Ym']+car2.length+cfg.HEADWAY)/self.get_speed_in_intersection(car2.turning) - (val['Xm'])/self.get_speed_in_intersection(car1.turning)+cfg.DISTANCE*cfg.LANE_WIDTH/self.get_speed_in_intersection(car2.turning)
 
             # --- case 2: from Xd, Yd
-            ans2 = (val['Yd']+car2.length+cfg.HEADWAY)/car2.speed_in_intersection - (val['Xd'])/car1.speed_in_intersection+cfg.DISTANCE*cfg.LANE_WIDTH/car2.speed_in_intersection
+            ans2 = (val['Yd']+car2.length+cfg.HEADWAY)/self.get_speed_in_intersection(car2.turning) - (val['Xd'])/self.get_speed_in_intersection(car1.turning)+cfg.DISTANCE*cfg.LANE_WIDTH/self.get_speed_in_intersection(car2.turning)
 
             tau_S2_S1 = max(ans1, ans2)
 
@@ -111,3 +81,25 @@ class Data:
             return ans
         else:
             return []
+
+    def turn_to_str(self, turn):
+        turn_str = ""
+        if turn == global_val.LEFT_TURN:
+            turn_str = "L"
+        elif turn == global_val.STRAIGHT_TURN:
+            turn_str = "S"
+        elif turn == global_val.RIGHT_TURN:
+            turn_str = "R"
+        else:
+            turn_str = turn
+
+        return turn_str
+
+    def get_speed_in_intersection(self, turn):
+        turn_speed = 0
+        if turn == global_val.STRAIGHT_TURN:
+            turn_speed = global_val.MAX_SPEED
+        else:
+            turn_speed = global_val.TURN_SPEED
+
+        return turn_speed

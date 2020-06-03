@@ -5,7 +5,7 @@ LANE_NUM_PER_DIRECTION = global_val.LANE_NUM_PER_DIRECTION
 
 
 MAX_SPEED = global_val.MAX_SPEED
-TURN_SPEED = 10.0    #25mph
+TURN_SPEED = global_val.TURN_SPEED    #25mph
 # REMEMBER!!!! Set this as a FLOATING NUMBER!!!!!!
 
 SUMO_TIME_ERR = 0

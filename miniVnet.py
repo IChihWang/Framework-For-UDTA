@@ -123,6 +123,8 @@ class MiniVnet:
             car.path_node = []
             car.path_link = []
 
+        return chosen_cars
+
 
     # =========== Use the DataStructure to route ====================== #
     # Important: Not thread safe!! only allow one car routing at a time (because data structure)
@@ -211,6 +213,8 @@ class MiniVnet:
             sink.print_node_arrival_time()
         #'''
 
+        car.traveling_time = nodes_arrival_time[dst_node.id]
+
         # Trace back from destination to source
         tracing_node = dst_node
         car.path_node.insert(0, (nodes_arrival_time[tracing_node.id], tracing_node))
@@ -230,11 +234,14 @@ class MiniVnet:
         assert car.path_link > 0, "The car cannot find the route"
         # TODO: if rerouting: check if it increase global cost
         #       if not: the route must be taken
+
+        '''
         for arrival_time, node in car.path_node:
             print(node, arrival_time)
 
         for delay, lane, link in car.path_link:
             print(link, link.id, delay, lane)
+        '''
 
     # =========== Update the cost with given path ====================== #
     def update_map(self, car):
@@ -268,8 +275,7 @@ class MiniVnet:
                     for _ in range(enter_link_time_idx-(len(link.car_data_base) - 1)):
                         link.car_data_base.append([])
 
-                print("==========")
-                print(enter_link_time)
+
                 # 1. add the car into the database "unscheduled"
                 unscheduled_copy_car = Car()
                 unscheduled_copy_car.id = car.id

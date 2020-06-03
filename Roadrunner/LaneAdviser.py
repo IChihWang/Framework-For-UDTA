@@ -5,6 +5,7 @@ from random import randrange
 import json
 import math
 import numpy
+import global_val
 #import myGraphic
 
 RESOLUTION = 2  # According to gen_advise.cpp
@@ -56,13 +57,12 @@ class LaneAdviser:
             self.count_lane_A_N_S_car_num[(lane_id, 'R')] = 0
             self.count_lane_A_N_S_car_num[(lane_id, 'S')] = 0
         for car in advised_n_sched_car:
-            self.count_lane_A_N_S_car_num[(car.lane, car.turning)] += 1
+            self.count_lane_A_N_S_car_num[(car.lane, self.turn_to_str(car.turning))] += 1
 
         #myGraphic.gui.setTimeMatrix(self.timeMatrix)
     # Give lane advice to Cars
     def adviseLane(self, car):
         advise_lane = None
-
         # Sort out the LOTs and list the candidates
         start_lane = (car.lane//cfg.LANE_NUM_PER_DIRECTION)*cfg.LANE_NUM_PER_DIRECTION
 
@@ -71,11 +71,11 @@ class LaneAdviser:
 
         # Get the shortest or the most ideal lane
         ideal_lane = None
-        if car.turning == 'R':
+        if car.turning == global_val.RIGHT_TURN:
             ideal_lane = start_lane+cfg.LANE_NUM_PER_DIRECTION-1
-        elif car.turning == 'L':
+        elif car.turning == global_val.LEFT_TURN:
             ideal_lane = start_lane
-        else:
+        elif car.turning == global_val.STRAIGHT_TURN:
             # find one mid-lane with smallest LOTs
             if cfg.LANE_NUM_PER_DIRECTION > 2:
                 ideal_lane = start_lane+candidate_list[0]
@@ -84,6 +84,10 @@ class LaneAdviser:
                     if lane_idx != 0 and lane_idx != cfg.LANE_NUM_PER_DIRECTION:
                         ideal_lane = start_lane+lane_idx
                         break
+        else:
+            print(car.turning)
+            print("Error: shouldn't happen")
+            exit()
         advise_lane = ideal_lane
 
         # Scan through the candidates and see if we want to change our candidates
@@ -132,7 +136,7 @@ class LaneAdviser:
         # The lane is chosen, update the matrix update giving the lane advice
         self.updateTableAfterAdvise(advise_lane, car.turning, car.length, self.timeMatrix)
         # Record the given lane
-        self.advised_lane[(car.lane//cfg.LANE_NUM_PER_DIRECTION, car.turning)] = advise_lane
+        self.advised_lane[(car.lane//cfg.LANE_NUM_PER_DIRECTION, self.turn_to_str(car.turning))] = advise_lane
         # Change the exact index to the lane index of one direction
         advise_lane = advise_lane%cfg.LANE_NUM_PER_DIRECTION
         #myGraphic.gui.setTimeMatrix(self.timeMatrix)
@@ -141,46 +145,13 @@ class LaneAdviser:
         return cfg.LANE_NUM_PER_DIRECTION-advise_lane-1 # The index of SUMO is reversed
 
 
-    # Give lane advice to Cars
-    def adviseLaneShortestTrajectory(self, car):
-        advise_lane = None
-
-        # Sort out the LOTs and list the candidates
-        start_lane = (car.lane//cfg.LANE_NUM_PER_DIRECTION)*cfg.LANE_NUM_PER_DIRECTION
-        occup_time_list = [self.getMaxTime(start_lane+idx, car.turning, self.timeMatrix) for idx in range(cfg.LANE_NUM_PER_DIRECTION)]
-        candidate_list = numpy.argsort(occup_time_list)
-
-        # Get the shortest or the most ideal lane
-        ideal_lane = None
-        if car.turning == 'R':
-            ideal_lane = start_lane+cfg.LANE_NUM_PER_DIRECTION-1
-        elif car.turning == 'L':
-            ideal_lane = start_lane
-        else:
-            # find one mid-lane with smallest LOTs
-            if cfg.LANE_NUM_PER_DIRECTION > 2:
-                ideal_lane = start_lane+candidate_list[0]
-            else:
-                for lane_idx in candidate_list:
-                    if lane_idx != 0 and lane_idx != cfg.LANE_NUM_PER_DIRECTION:
-                        ideal_lane = start_lane+lane_idx
-                        break
-        advise_lane = ideal_lane# Change the exact index to the lane index of one direction
-        advise_lane = advise_lane%cfg.LANE_NUM_PER_DIRECTION
-
-        #myGraphic.gui.setTimeMatrix([[0]* self.num_di for i in range(self.num_di)])
-        #myGraphic.gui.setAdviseMatrix(self.advised_lane)
-
-        return cfg.LANE_NUM_PER_DIRECTION-advise_lane-1 # The index of SUMO is reversed
-
-
-    def getMaxTime(self, lane, direction, timeMatrix):
+    def getMaxTime(self, lane, turning, timeMatrix):
         # get the earliest time when a car can drive
         # through lane "lane" in direction "direction".
 
         # lane : int
         # direction : string
-
+        direction = self.turn_to_str(turning)
         temp = []
         quotient = lane // cfg.LANE_NUM_PER_DIRECTION
 
@@ -200,7 +171,7 @@ class LaneAdviser:
                 temp.append(timeMatrix[self.num_di-1 - e['X']][self.num_di-1 - e['Y']])
 
         else:  # quotient == 4
-            # rotate 270 degree clockwise
+            # rotate 270 degree clockwise\
             for e in self.lane_dict[str(lane % cfg.LANE_NUM_PER_DIRECTION) + direction]:
                 temp.append(timeMatrix[e['Y']][self.num_di-1 - e['X']])
 
@@ -208,9 +179,10 @@ class LaneAdviser:
 
 
 
-    def updateTable(self, lane, direction, time, timeMatrix):
+    def updateTable(self, lane, turning, time, timeMatrix):
         # Update all the squares on the trajectory "lane + direction" to "time".
         quotient = (lane) // cfg.LANE_NUM_PER_DIRECTION
+        direction = self.turn_to_str(turning)
 
         if quotient == 0:
             # no rotation
@@ -240,11 +212,11 @@ class LaneAdviser:
                     timeMatrix[e['Y']][self.num_di-1 - e['X']] = time
 
 
-    def updateTableAfterAdvise(self, lane, direction, car_length, timeMatrix):
+    def updateTableAfterAdvise(self, lane, turning, car_length, timeMatrix):
 
         # Update all the squares on the trajectory "lane + direction" to "diff_time".
-
         quotient = lane // cfg.LANE_NUM_PER_DIRECTION
+        direction = self.turn_to_str(turning)
         speed = None
 
         if direction == 'S':
@@ -280,3 +252,17 @@ class LaneAdviser:
     # Reset the records
     def resetTable(self):
         self.timeMatrix = [[0] * self.num_di for i in range(self.num_di)]
+
+
+    def turn_to_str(self, turn):
+        turn_str = ""
+        if turn == global_val.LEFT_TURN:
+            turn_str = "L"
+        elif turn == global_val.STRAIGHT_TURN:
+            turn_str = "S"
+        elif turn == global_val.RIGHT_TURN:
+            turn_str = "R"
+        else:
+            turn_str = turn
+
+        return turn_str

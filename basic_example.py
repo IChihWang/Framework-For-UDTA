@@ -25,8 +25,8 @@ np.random.seed(0)
 if __name__ == '__main__':
     my_net = MiniVnet()
 
-
-    my_net.createGridNetwork(10, 1)
+    grid_size = 10
+    my_net.createGridNetwork(grid_size, 1)
 
     '''
     i1 = my_net.addIntersection('I1', 3)
@@ -80,6 +80,8 @@ if __name__ == '__main__':
 
     #print(my_net.sinks[0].out_nodes[0].out_links)
 
+
+    '''
     car = Car()
     car.id = "hello_car"
     car.lentgh = 5
@@ -90,6 +92,57 @@ if __name__ == '__main__':
     print(car.recorded_in_database)
 
     my_net.choose_car([car])
+    '''
+
+
+    car_list = []
+    car_num = 100
+    for idx in range(car_num):
+        car = Car()
+        car.id = "car_" + str(idx)
+        car.lentgh = 5
+
+        src_node_idx = random.randrange(0,grid_size*4)
+        dst_node_idx = src_node_idx
+        while src_node_idx == dst_node_idx:
+            dst_node_idx = random.randrange(0,grid_size*4)
+
+        car.src_node = my_net.sinks[src_node_idx].out_nodes
+        car.dst_node = my_net.sinks[dst_node_idx].in_nodes
+        car_list.append(car)
+
+
+    # round robbin x 5 times
+    for _ in range(1):
+        total_cost = 0
+        path_diff_count = 0
+        for car in car_list:
+            saved_path = car.path_node
+
+            # clear car from the database
+
+            cars = my_net.choose_car([car])
+            car = cars[0]
+            my_net.dijkstra(car, car.src_node, car.dst_node, 0)
+            my_net.update_map(car)
+
+
+            total_cost += car.traveling_time
+            #'''
+            if saved_path != car.path_node and saved_path != []:
+                #print(car.id, car.path_node)
+                path_diff_count += 1
+            #'''
+
+            '''
+            if car.id == "car_13":
+                print(car.path_node)
+            #'''
+
+            print(car.id)
+        print(path_diff_count)
+        print("=============", total_cost/car_num)
+
 
 
 
