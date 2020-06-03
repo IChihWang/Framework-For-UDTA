@@ -135,6 +135,9 @@ class MiniVnet:
         nodes_from_link = dict() # (node_id, From which link)
         nodes_is_visit = dict() # (node_id, is_visited)
         links_delay = dict() # (link_id, delay)
+        links_lane = dict() # (link_id, delay)
+        links_delay_record = dict()  # (link_id, {car.id, delay}) Record the new delays of all cars in same batch
+        # TODO: see if we want to update AT of all cars
 
         for intersection in self.intersections:
             intersection.initial_for_dijkstra(nodes_arrival_time, nodes_from_link, nodes_is_visit)
@@ -147,6 +150,7 @@ class MiniVnet:
 
         while len(unvisited_queue) > 0:
             current_arrival_time, current_node = heapq.heappop(unvisited_queue)
+
 
             # Only process the first time we pop the node from the queue
             if nodes_is_visit[current_node.id] == True:
@@ -163,26 +167,32 @@ class MiniVnet:
 
                 next_intersection = next_node.get_connect_to_intersection()
                 if next_intersection != None:
-                    next_intersection.get_cost_from_manager(current_arrival_time, current_node)
+                    # TODO: build a "new car"
+                    new_car = Car()
+                    current_arrival_time_idx = int(math.floor(current_arrival_time))
+                    new_car.position = out_link.length - ((current_arrival_time - current_arrival_time_idx) * global_val.MAX_SPEED)
 
-                    # TODO: Update links_delay
 
+                    next_intersection.update_cost_with_manager(current_arrival_time_idx, next_node, new_car, links_delay, links_lane, links_delay_record)
+
+
+                    '''
                     # TODO: Dummy function
                     for link in next_intersection.links:
                         links_delay[link.id] = 1
+                    '''
 
 
             # visiting neighbors
             for turning, out_link in current_node.out_links:
                 neighbor_node = out_link.out_node
-                current_time = nodes_arrival_time[current_node.id]
 
                 # Check the value of the neighbors in Dijkstra
                 # Only intersection links have delay
                 if out_link.id in links_delay:
-                    arriving_neighbor_time = current_time +  out_link.traveling_time + links_delay[out_link.id]
+                    arriving_neighbor_time = current_arrival_time +  out_link.traveling_time + links_delay[out_link.id]
                 else:
-                    arriving_neighbor_time = current_time +  out_link.traveling_time
+                    arriving_neighbor_time = current_arrival_time +  out_link.traveling_time
 
                 if nodes_arrival_time[neighbor_node.id] > arriving_neighbor_time:
                     nodes_arrival_time[neighbor_node.id] = arriving_neighbor_time
@@ -211,9 +221,9 @@ class MiniVnet:
             car.path_node.insert(0, (nodes_arrival_time[tracing_node.id], tracing_node))
 
             if tracing_link.id in links_delay:
-                car.path_link.insert(0, (links_delay[tracing_link.id], tracing_link))
+                car.path_link.insert(0, (links_delay[tracing_link.id], links_lane[tracing_link.id], tracing_link))
             else:
-                car.path_link.insert(0, (0, tracing_link))
+                car.path_link.insert(0, (0, 0, tracing_link))
 
             tracing_link = tracing_link = nodes_from_link[tracing_node.id]
 
@@ -223,8 +233,8 @@ class MiniVnet:
         for arrival_time, node in car.path_node:
             print(node, arrival_time)
 
-        for delay, link in car.path_link:
-            print(link, link.id, delay)
+        for delay, lane, link in car.path_link:
+            print(link, link.id, delay, lane)
 
     # =========== Update the cost with given path ====================== #
     def update_map(self, car):
@@ -232,8 +242,8 @@ class MiniVnet:
 
         # path: in_node -----> (link) -----> out_node -----> (next_link)
         for link_idx in range(len(car.path_link)-1):
-            _, link = car.path_link[link_idx]
-            delay, next_link = car.path_link[link_idx+1]
+            _, _, link = car.path_link[link_idx]
+            delay, lane, next_link = car.path_link[link_idx+1]
             enter_link_time, in_node = car.path_node[link_idx]
             _, out_node = car.path_node[link_idx+1]
 
@@ -248,7 +258,7 @@ class MiniVnet:
 
                 # compute the position on the link
                 enter_link_time_idx = int(math.floor(enter_link_time))
-                init_position = (enter_link_time - enter_link_time_idx) * global_val.MAX_SPEED
+                init_position = link.length - ((enter_link_time - enter_link_time_idx) * global_val.MAX_SPEED)
 
                 # compute the traveling time
                 actual_travel_time = link.traveling_time + delay
@@ -263,8 +273,10 @@ class MiniVnet:
                 # 1. add the car into the database "unscheduled"
                 unscheduled_copy_car = Car()
                 unscheduled_copy_car.id = car.id
+                unscheduled_copy_car.length = car.length
                 unscheduled_copy_car.position = init_position
                 unscheduled_copy_car.turning = turn
+                unscheduled_copy_car.lane = lane
                 unscheduled_copy_car.is_scheduled = False
                 link.car_data_base[enter_link_time_idx].append(unscheduled_copy_car)
                 car.recorded_in_database[link.id]["time_car"].append((enter_link_time_idx,unscheduled_copy_car))
@@ -280,8 +292,10 @@ class MiniVnet:
 
                     scheduled_copy_car = Car()
                     scheduled_copy_car.id = car.id
+                    scheduled_copy_car.length = car.length
                     scheduled_copy_car.arriving_time = remaining_actual_travel_time
                     scheduled_copy_car.turning = turn
+                    scheduled_copy_car.lane = lane
                     scheduled_copy_car.is_scheduled = True
                     link.car_data_base[current_time_idx].append(scheduled_copy_car)
                     car.recorded_in_database[link.id]["time_car"].append((current_time_idx,scheduled_copy_car))

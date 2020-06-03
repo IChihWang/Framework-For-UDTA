@@ -14,3 +14,6 @@ ROAD_LENGTH = 200
 # TODO: change (sync) the one in Roadrunner
 # TODO: actual travel time vs. scheduling time
 #       Currently: scheduling time = 1 sec in each time_stemp in database
+
+
+LANE_NUM_PER_DIRECTION = 3

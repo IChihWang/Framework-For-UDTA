@@ -1,7 +1,10 @@
-LANE_NUM_PER_DIRECTION = 3
+
+import global_val
+
+LANE_NUM_PER_DIRECTION = global_val.LANE_NUM_PER_DIRECTION
 
 
-MAX_SPEED = 11.18    #25mph
+MAX_SPEED = global_val.MAX_SPEED
 TURN_SPEED = 10.0    #25mph
 # REMEMBER!!!! Set this as a FLOATING NUMBER!!!!!!
 

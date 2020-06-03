@@ -1,10 +1,13 @@
  #coding=utf-8
-
+import sys
+sys.path.append('./Roadrunner')
 import math
 
 from basic_graph import Node, Link, Car
 import itertools
 import global_val
+from IntersectionManager import IntersectionManager
+
 
 class Intersection:
     def __init__(self, name, num_lane):
@@ -62,15 +65,33 @@ class Intersection:
             nodes_from_link[self.out_nodes[i].id] = None
             nodes_is_visit[self.out_nodes[i].id] = False
 
-    def get_cost_from_manager(self, arrival_time, node):
+    def update_cost_with_manager(self, arrival_time_idx, node, new_car, links_delay, links_lane, links_delay_record):
         # Call single intersection manager
         # Update the travel time (delay) on links within the intersection
-        node.get_in_intersection_lane()
-        # TODO: build a "new car"
-        #for in_node in self.in_nodes:
+        temp_lane = node.get_in_intersection_lane()
+        new_car.lane = temp_lane
 
+        all_cars = []
+        all_cars.append(new_car)
+        for in_node in self.in_nodes:
+            assert len(in_node.in_links)==1, "Wrong link"
+            link = in_node.in_links[0]
+            if len(link.car_data_base) > arrival_time_idx:
+                for car in link.car_data_base[arrival_time_idx]:
+                    all_cars.append(car)
 
-        pass
+        intersection_manager = IntersectionManager(self.name)
+        turning_delay, lane_results = intersection_manager.run(all_cars, 0)
+
+        for link, turn in node.link_to_turn.items():
+            turn_str = intersection_manager.turn_to_str(turn)
+
+            delay_results = turning_delay[turn_str]
+            delay = delay_results[new_car.id]
+            links_delay[link.id] = delay
+            links_lane[link.id] = lane_results[turn_str]
+            links_delay_record = delay_results
+
 
     def print_node_arrival_time(self):
         # For debugging
@@ -97,6 +118,9 @@ class Road:
         self.link_groups = [Link() for i in range(2)]
         self.components = [None for i in range(2)]
         self.length = global_val.ROAD_LENGTH
+
+        for link in self.link_groups:
+            link.length = self.length
 
     '''
     ------------------------

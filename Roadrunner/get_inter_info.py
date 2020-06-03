@@ -11,7 +11,7 @@ import config as cfg
 
 class Data:
     def __init__(self):
-        with open('inter_info/lane_info'+str(cfg.LANE_NUM_PER_DIRECTION)+'.json', 'r') as file:
+        with open('./Roadrunner/inter_info/lane_info'+str(cfg.LANE_NUM_PER_DIRECTION)+'.json', 'r') as file:
             self.tau = json.load(file)
 
     '''

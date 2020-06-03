@@ -18,7 +18,7 @@ class LaneAdviser:
             self.timeMatrix = [[0]* self.num_di for i in range(self.num_di)]
 
             # Load the information of which boxes a trajectory will affect
-            with open('advise_info/advise_info'+str(cfg.LANE_NUM_PER_DIRECTION)+'.json', 'r') as file:
+            with open('./Roadrunner/advise_info/advise_info'+str(cfg.LANE_NUM_PER_DIRECTION)+'.json', 'r') as file:
                 self.lane_dict = json.load(file)
 
             # Record the lane advice on each directions and initialize
@@ -38,65 +38,16 @@ class LaneAdviser:
         return copy.deepcopy(self.timeMatrix)
 
     # Update the table (final version for simulation usage)
-    def updateTableFromCars(self, n_sched_car, advised_n_sched_car):
+    def updateTableFromCars(self, sched_car, advised_n_sched_car):
         self.resetTable()
 
-        for car in n_sched_car:
-            self.updateTable(car.lane, car.turning, car.OT+car.D, self.timeMatrix)
+        for car in sched_car:
+            self.updateTable(car.lane, car.turning, car.arriving_time, self.timeMatrix)
 
-        # Case 1: update with the latest car
-        '''
-        for car in advised_n_sched_car:
-            self.updateTable(car.lane, car.turning, car.position/cfg.MAX_SPEED, self.timeMatrix)
-        #'''
-        # Case 2: add costs
-        '''
-        for car in advised_n_sched_car:
-            self.updateTableAfterAdvise(car.lane, car.turning, car.length, self.timeMatrix)
-        #'''
-
-        # Case 3: (case 1 + considering the halt) update with the latest car
-        '''
-        latest_delay_list = dict()
-        cars_on_lanes = dict()
-        for idx in range(4*cfg.LANE_NUM_PER_DIRECTION):
-            cars_on_lanes[idx] = []
-        for car in n_sched_car:
-            cars_on_lanes[car.lane].append(car)
-        for idx in range(4*cfg.LANE_NUM_PER_DIRECTION):
-            sorted_car_list = sorted(cars_on_lanes[idx], key=lambda car: car.position, reverse=True)
-            if len(sorted_car_list) > 0:
-                latest_delay_list[idx] = sorted_car_list[0].D
-            else:
-                latest_delay_list[idx] = 0
-
-        # Consider the halting time
-        for car in advised_n_sched_car:
-            if car.H_should_halt == True:
-                self.updateTable(car.lane, car.turning, car.position/cfg.MAX_SPEED+latest_delay_list[idx], self.timeMatrix)
-            else:
-                self.updateTable(car.lane, car.turning, car.position/cfg.MAX_SPEED, self.timeMatrix)
-        #'''
 
         # Case 4: (case 1 + considering the halt) update with the latest car  "Using desired_lane!!!!!!!""
         for car in advised_n_sched_car:
-            latest_delay_list = dict()
-            cars_on_lanes = dict()
-            for idx in range(4*cfg.LANE_NUM_PER_DIRECTION):
-                cars_on_lanes[idx] = []
-            for car in n_sched_car:
-                cars_on_lanes[car.desired_lane].append(car)
-            for idx in range(4*cfg.LANE_NUM_PER_DIRECTION):
-                sorted_car_list = sorted(cars_on_lanes[idx], key=lambda car: car.position, reverse=True)
-                if len(sorted_car_list) > 0:
-                    latest_delay_list[idx] = sorted_car_list[0].D
-                else:
-                    latest_delay_list[idx] = 0
-
-            if (car.CC_state != None) and  ("Platoon" in car.CC_state):
-                self.updateTable(car.lane, car.turning, car.position/cfg.MAX_SPEED+latest_delay_list[idx], self.timeMatrix)
-            else:
-                self.updateTable(car.lane, car.turning, car.position/cfg.MAX_SPEED, self.timeMatrix)
+            self.updateTable(car.lane, car.turning, car.position/cfg.MAX_SPEED, self.timeMatrix)
 
 
         # Count car number on each lane of advised but not scheduled

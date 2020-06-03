@@ -68,7 +68,7 @@ class Link:
         self.traveling_time = 0.5
         self.delay = [0 for _ in range(5)]
         self.car_data_base = [[] for _ in range(5)] # 2D array
-        self.at = []
+        self.length = 0
 
     '''
     def updateCost(self, value):
@@ -84,6 +84,7 @@ class Car:
 
     def __init__(self):
         self.id = None
+        self.length = 5 # to-be-modified
 
         # For routing
         self.path_node = []
@@ -95,3 +96,4 @@ class Car:
         self.arriving_time = None
         self.position = None
         self.turning = None
+        self.lane = None

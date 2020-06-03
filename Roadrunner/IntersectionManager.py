@@ -6,10 +6,10 @@ import threading
 import random
 
 
-from Cars import Car
-from milp import Icacc, IcaccPlus, Fcfs, FixedSignal
+from basic_graph import Car
+from milp import Roadrunner
 from LaneAdviser import LaneAdviser
-
+import global_val
 
 class IntersectionManager:
     def __init__(self, my_id):
@@ -64,25 +64,30 @@ class IntersectionManager:
         # index_of_target_car: index of the target car in the list
 
         # The result is the candidate for turnings
-        turning_results = dict()
+        turning_delay = dict()
+        lane_results = dict()
 
         # Classify the cars for scheduler
         sched_car = []      # Scheduled
         n_sched_car = []    # Not scheduled
+        advised_n_sched_car = []
+
+        delay_list = dict() # (car, delay)
+        OT_list = dict() # (car, OT)
 
         for car_idx in range(len(cars)):
             car = cars[car_idx]
-            if car.AT == None:
-                car.OT = None       # Format the data for the scheduler
-                car.D = None
+            if car.position != None:
+                delay_list[car] = None
+                OT_list[car] = None
                 n_sched_car.append(car)
 
                 # Cars given lane advice but not scheduled
                 if car_idx != index_of_target_car:
                     advised_n_sched_car.append(car)
             else:
-                car.OT = 0          # Format the data for the scheduler
-                car.D = car.AT
+                delay_list[car] = car.arriving_time
+                OT_list[car] = 0
                 sched_car.append(car)
 
 
@@ -90,27 +95,34 @@ class IntersectionManager:
         self.lane_advisor.updateTableFromCars(sched_car, advised_n_sched_car)
 
         for turning_str in ['R', 'S', 'L']:
-
+            target_car = cars[index_of_target_car]
             # Assign the turning to the car
-            cars[index_of_target_car].turning = turning_str
+            target_car.turning = turning_str
 
             # Line advise
-            for n_car in n_sched_car:
-                advised_lane = self.lane_advisor.adviseLane(n_car)
-                n_car.lane = advised_lane
+            advised_lane = self.lane_advisor.adviseLane(target_car)
+            target_car.lane = advised_lane
 
             # Reset the delays
-            for c_idx in range(len(n_sched_car)):
-                n_sched_car[c_idx].D = None
+            for car in n_sched_car:
+                delay_list[car.id] = None
 
             # Do the scheduling
-            IcaccPlus(sched_car, n_sched_car)
+            delay_results = Roadrunner(sched_car, n_sched_car, delay_list, OT_list)
 
-            for car in cars:
-                if car.AT == None and car not in n_sched_car:
-                    n_sched_car.append(car)
-                elif car.AT != None and car not in sched_car:
-                    sched_car.append(car)
-                    
-            turning_results[turning_str] = [car.AT for car in cars]
-            lane_results[turning_str] = [car.lane for car in n_sched_car]
+            turning_delay[turning_str] = delay_results
+            lane_results[turning_str] = target_car.lane
+
+        return (turning_delay, lane_results)
+
+
+    def turn_to_str(self, turn):
+        turn_str = ""
+        if turn == global_val.LEFT_TURN:
+            turn_str = "L"
+        elif turn == global_val.STRAIGHT_TURN:
+            turn_str = "S"
+        elif turn == global_val.RIGHT_TURN:
+            turn_str = "R"
+
+        return turn_str

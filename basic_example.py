@@ -25,6 +25,10 @@ np.random.seed(0)
 if __name__ == '__main__':
     my_net = MiniVnet()
 
+
+    my_net.createGridNetwork(10, 1)
+
+    '''
     i1 = my_net.addIntersection('I1', 3)
     i2 = my_net.addIntersection('I2', 3)
     i3 = my_net.addIntersection('I3', 3)
@@ -56,6 +60,7 @@ if __name__ == '__main__':
     my_net.connect(i4, 0, s5, 0)
 
     my_net.compile()
+    '''
 
     '''
     i1.print_details()
@@ -77,6 +82,7 @@ if __name__ == '__main__':
 
     car = Car()
     car.id = "hello_car"
+    car.lentgh = 5
     src_node = my_net.sinks[0].out_nodes
     dst_node = my_net.sinks[4].in_nodes
     my_net.dijkstra(car, src_node, dst_node, 1)
