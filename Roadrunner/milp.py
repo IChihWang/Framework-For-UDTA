@@ -19,7 +19,7 @@ def Roadrunner(old_cars, new_cars, delay_list, OT_list):
 
     # part 3: claim parameters
     for c_idx in range(len(new_cars)):
-        if new_cars[c_idx].turning == 'S':
+        if new_cars[c_idx].turning == global_val.STRAIGHT_TURN:
             delay_list[new_cars[c_idx]] = solver.NumVar(0, solver.infinity(), 'd'+str(c_idx))
         else:
             min_d = (2*cfg.CCZ_DEC2_LEN/(cfg.MAX_SPEED+cfg.TURN_SPEED)) - (cfg.CCZ_DEC2_LEN/cfg.MAX_SPEED)
@@ -35,18 +35,18 @@ def Roadrunner(old_cars, new_cars, delay_list, OT_list):
 
                 if (type(delay_list[all_cars[c_jdx]])==float or type(delay_list[all_cars[c_idx]])==float):
                     if (type(delay_list[all_cars[c_idx]])!=float and type(delay_list[all_cars[c_jdx]])==float):
-                        bound = all_cars[c_jdx].length/get_speed_in_intersection(all_cars[c_jdx].turning) + (OT_list[all_cars[c_jdx]]+delay_list[all_cars[c_jdx]])
-                        bound += cfg.HEADWAY/get_speed_in_intersection(all_cars[c_jdx].turning)
-                        if all_cars[c_idx].turning == 'S' and all_cars[c_jdx].turning != 'S':
+                        bound = all_cars[c_jdx].length/all_cars[c_jdx].speed_in_intersection + (OT_list[all_cars[c_jdx]]+delay_list[all_cars[c_jdx]])
+                        bound += cfg.HEADWAY/all_cars[c_jdx].speed_in_intersection
+                        if all_cars[c_idx].turning == global_val.STRAIGHT_TURN and all_cars[c_jdx].turning != global_val.STRAIGHT_TURN:
                             bound += (cfg.MAX_SPEED-cfg.TURN_SPEED)*(cfg.CCZ_DEC2_LEN)/(cfg.MAX_SPEED*(cfg.MAX_SPEED+cfg.TURN_SPEED))
                         bound = bound - OT_list[all_cars[c_idx]]
                         tmp_conts = solver.Constraint(bound,solver.infinity())
                         tmp_conts.SetCoefficient(delay_list[all_cars[c_idx]], 1)
                         #print("eq1-1 ", bound, all_cars[c_idx]['ID'], all_cars[c_jdx]['ID'])
                     elif (type(delay_list[all_cars[c_idx]])==float and type(delay_list[all_cars[c_jdx]])!=float):
-                        bound = all_cars[c_idx].length/get_speed_in_intersection(all_cars[c_idx].turning) + (OT_list[all_cars[c_idx]]+delay_list[all_cars[c_idx]])
-                        bound += cfg.HEADWAY/get_speed_in_intersection(all_cars[c_idx].turning)
-                        if all_cars[c_jdx].turning == 'S' and all_cars[c_idx].turning != 'S':
+                        bound = all_cars[c_idx].length/all_cars[c_idx].speed_in_intersection + (OT_list[all_cars[c_idx]]+delay_list[all_cars[c_idx]])
+                        bound += cfg.HEADWAY/all_cars[c_idx].speed_in_intersection
+                        if all_cars[c_jdx].turning == global_val.STRAIGHT_TURN and all_cars[c_idx].turning != global_val.STRAIGHT_TURN:
                             bound += (cfg.MAX_SPEED-cfg.TURN_SPEED)*(cfg.CCZ_DEC2_LEN)/(cfg.MAX_SPEED*(cfg.MAX_SPEED+cfg.TURN_SPEED))
                         bound = bound - OT_list[all_cars[c_jdx]]
                         tmp_conts = solver.Constraint(bound, solver.infinity())
@@ -57,9 +57,9 @@ def Roadrunner(old_cars, new_cars, delay_list, OT_list):
                     if (OT_list[all_cars[c_idx]] > OT_list[all_cars[c_jdx]]):
 
 
-                        bound = all_cars[c_jdx].length/get_speed_in_intersection(all_cars[c_jdx].turning) - OT_list[all_cars[c_idx]]+OT_list[all_cars[c_jdx]]
-                        bound += cfg.HEADWAY/get_speed_in_intersection(all_cars[c_jdx].turning)
-                        if all_cars[c_idx].turning == 'S' and all_cars[c_jdx].turning != 'S':
+                        bound = all_cars[c_jdx].length/all_cars[c_jdx].speed_in_intersection - OT_list[all_cars[c_idx]]+OT_list[all_cars[c_jdx]]
+                        bound += cfg.HEADWAY/all_cars[c_jdx].speed_in_intersection
+                        if all_cars[c_idx].turning == global_val.STRAIGHT_TURN and all_cars[c_jdx].turning != global_val.STRAIGHT_TURN:
                             bound += (cfg.MAX_SPEED-cfg.TURN_SPEED)*(cfg.CCZ_DEC2_LEN)/(cfg.MAX_SPEED*(cfg.MAX_SPEED+cfg.TURN_SPEED))
                         tmp_conts = solver.Constraint(bound, solver.infinity())
                         tmp_conts.SetCoefficient(delay_list[all_cars[c_idx]], 1)
@@ -67,9 +67,9 @@ def Roadrunner(old_cars, new_cars, delay_list, OT_list):
                         #print("eq1-3 ", bound, all_cars[c_idx]['ID'], all_cars[c_jdx]['ID'])
                     elif (OT_list[all_cars[c_idx]] < OT_list[all_cars[c_jdx]]):
 
-                        bound = all_cars[c_idx].length/get_speed_in_intersection(all_cars[c_idx].turning) + OT_list[all_cars[c_idx]]-OT_list[all_cars[c_jdx]]
-                        bound += cfg.HEADWAY/get_speed_in_intersection(all_cars[c_idx].turning)
-                        if all_cars[c_jdx].turning == 'S' and all_cars[c_idx].turning != 'S':
+                        bound = all_cars[c_idx].length/all_cars[c_idx].speed_in_intersection + OT_list[all_cars[c_idx]]-OT_list[all_cars[c_jdx]]
+                        bound += cfg.HEADWAY/all_cars[c_idx].speed_in_intersection
+                        if all_cars[c_jdx].turning == global_val.STRAIGHT_TURN and all_cars[c_idx].turning != global_val.STRAIGHT_TURN:
                             bound += (cfg.MAX_SPEED-cfg.TURN_SPEED)*(cfg.CCZ_DEC2_LEN)/(cfg.MAX_SPEED*(cfg.MAX_SPEED+cfg.TURN_SPEED))
                         tmp_conts = solver.Constraint(bound, solver.infinity())
                         tmp_conts.SetCoefficient(delay_list[all_cars[c_idx]], -1)
@@ -188,13 +188,3 @@ def Roadrunner(old_cars, new_cars, delay_list, OT_list):
         delay_results[car.id] = delay_list[car].solution_value()
 
     return delay_results
-
-
-def get_speed_in_intersection(turn):
-    turn_speed = 0
-    if turn == global_val.STRAIGHT_TURN:
-        turn_speed = global_val.MAX_SPEED
-    else:
-        turn_speed = global_val.TURN_SPEED
-
-    return turn_speed

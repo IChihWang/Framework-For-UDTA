@@ -97,5 +97,6 @@ class Car:
         self.position = None
         self.turning = None
         self.lane = None
+        self.speed_in_intersection = None
 
         self.traveling_time = 0

@@ -12,10 +12,12 @@ from IntersectionManager import IntersectionManager
 class Intersection:
     def __init__(self, name, num_lane):
         self.name = name
+        self.coordinate = None
         self.num_lane = num_lane
         self.components = [None for i in range(4)]
         self.in_nodes = [Node(str(name)+"_i_"+str(i)) for i in range(4)]
         self.out_nodes = [Node(str(name)+"_o_"+str(i)) for i in range(4)]
+        self.intersection_manager = IntersectionManager(self.name)
         #self.direction_nodes = [[[Node() for k in range(num_lane)] for j in range(2)] for i in range(4)]
         self.links = []
         #self.new_link = [[[Link() for k in range(3)] for j in range(num_lane)] for i in range(4)]
@@ -80,13 +82,15 @@ class Intersection:
                 for car in link.car_data_base[arrival_time_idx]:
                     all_cars.append(car)
 
-        intersection_manager = IntersectionManager(self.name)
-        turning_delay, lane_results = intersection_manager.run(all_cars, 0)
+
+        turning_delay, lane_results = self.intersection_manager.run(all_cars, 0)
 
         for link, turn in node.link_to_turn.items():
             delay_results = turning_delay[turn]
             delay = delay_results[new_car.id]
             links_delay[link.id] = delay
+
+            #print(turn, delay)
             links_lane[link.id] = lane_results[turn]
             links_delay_record = delay_results
 
@@ -103,9 +107,6 @@ class Intersection:
         print(self.name, self.num_lane, self.components, self.links)
 
 
-
-
-
     def __repr__(self):
         return '{} {}'.format(self.__class__.__name__, self.name)
 
@@ -119,6 +120,7 @@ class Road:
 
         for link in self.link_groups:
             link.length = self.length
+            link.traveling_time = self.length/global_val.MAX_SPEED
 
     '''
     ------------------------

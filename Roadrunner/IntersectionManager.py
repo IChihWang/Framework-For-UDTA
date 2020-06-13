@@ -98,7 +98,7 @@ class IntersectionManager:
             target_car = cars[index_of_target_car]
             # Assign the turning to the car
             target_car.turning = turning
-
+            target_car.speed_in_intersection = self.get_speed_in_intersection(turning)
             # Line advise
             advised_lane = self.lane_advisor.adviseLane(target_car)
             target_car.lane = advised_lane
@@ -113,3 +113,12 @@ class IntersectionManager:
             lane_results[turning] = target_car.lane
 
         return (turning_delay, lane_results)
+
+    def get_speed_in_intersection(self, turn):
+        turn_speed = 0
+        if turn == global_val.STRAIGHT_TURN:
+            turn_speed = global_val.MAX_SPEED
+        else:
+            turn_speed = global_val.TURN_SPEED
+
+        return turn_speed

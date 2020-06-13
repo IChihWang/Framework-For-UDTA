@@ -18,6 +18,7 @@ import random
 import numpy as np
 
 from basic_graph import Car
+import time
 
 random.seed(0)
 np.random.seed(0)
@@ -96,7 +97,7 @@ if __name__ == '__main__':
 
 
     car_list = []
-    car_num = 100
+    car_num = 20
     for idx in range(car_num):
         car = Car()
         car.id = "car_" + str(idx)
@@ -112,6 +113,7 @@ if __name__ == '__main__':
         car_list.append(car)
 
 
+    TiStamp1 = time.time()
     # round robbin x 5 times
     for _ in range(1):
         total_cost = 0
@@ -140,8 +142,12 @@ if __name__ == '__main__':
             #'''
 
             print(car.id)
-        print(path_diff_count)
-        print("=============", total_cost/car_num)
+        #print(path_diff_count)
+        #print("=============", total_cost/car_num)
+
+
+    print(time.time() - TiStamp1, "sec")
+    my_net.get_car_time_space_list(car_list);
 
 
 

@@ -6,6 +6,8 @@ from vehicle_map import Intersection, Road, Sink
 import itertools
 import heapq
 import global_val
+import numpy
+import scipy.io as io
 
 class MiniVnet:
     def __init__(self):
@@ -49,6 +51,10 @@ class MiniVnet:
     def createGridNetwork(self, N, num_lane):
         intersections = [[self.addIntersection('I' + str(i) + '_' + str(j), num_lane) for j in range(N)] for i in
                          range(N)]
+
+        for i in range(N):
+            for j in range(N):
+                intersections[i][j].coordinate = (i,j)
 
         sinks = [[self.addSink('S' + str(i) + '_' + str(j), num_lane) for j in range(N)] for i in range(4)]
 
@@ -282,6 +288,7 @@ class MiniVnet:
                 unscheduled_copy_car.length = car.length
                 unscheduled_copy_car.position = init_position
                 unscheduled_copy_car.turning = turn
+                unscheduled_copy_car.speed_in_intersection = self.get_speed_in_intersection(turn)
                 unscheduled_copy_car.lane = lane
                 unscheduled_copy_car.is_scheduled = False
                 link.car_data_base[enter_link_time_idx].append(unscheduled_copy_car)
@@ -301,6 +308,7 @@ class MiniVnet:
                     scheduled_copy_car.length = car.length
                     scheduled_copy_car.arriving_time = remaining_actual_travel_time
                     scheduled_copy_car.turning = turn
+                    scheduled_copy_car.speed_in_intersection = self.get_speed_in_intersection(turn)
                     scheduled_copy_car.lane = lane
                     scheduled_copy_car.is_scheduled = True
                     link.car_data_base[current_time_idx].append(scheduled_copy_car)
@@ -308,3 +316,30 @@ class MiniVnet:
 
                     current_time_step = current_time_step+1
                     remaining_actual_travel_time = actual_travel_time - current_time_step
+
+
+    def get_speed_in_intersection(self, turn):
+        turn_speed = 0
+        if turn == global_val.STRAIGHT_TURN:
+            turn_speed = global_val.MAX_SPEED
+        else:
+            turn_speed = global_val.TURN_SPEED
+
+        return turn_speed
+
+    def get_car_time_space_list(self, cars):
+        all_car_data = {}
+        for car in cars:
+            car_route = []
+
+            for node_idx in range(len(car.path_node)-1):
+                _, in_intersection_node = car.path_node[node_idx]
+                intersection = in_intersection_node.get_connect_to_intersection()
+                if intersection != None:
+                    time, _ = car.path_node[node_idx+1]
+                    coordinate = numpy.array([intersection.coordinate[0], intersection.coordinate[1], int(math.floor(time))])
+                    car_route.append(coordinate)
+
+            all_car_data[car.id] = numpy.array(car_route)
+
+        io.savemat('test.mat',all_car_data)
