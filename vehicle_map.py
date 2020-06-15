@@ -9,8 +9,9 @@ from basic_graph import Node, Link, Car
 import itertools
 import global_val
 from IntersectionManager import IntersectionManager
+from get_inter_length_info import Data
 
-
+inter_length_data = Data()
 
 class Intersection:
     def __init__(self, name, num_lane):
@@ -42,9 +43,11 @@ class Intersection:
                 sink_node.in_links.append(new_link)
                 new_link.out_node = sink_node
 
+                for lane in range(global_val.LANE_NUM_PER_DIRECTION):
+                    time = inter_length_data.getIntertime(lane, k)
+                    new_link.lane_to_in_inter_time[lane] = time
+
                 self.links.append(new_link)
-
-
 
     def connect(self, index, road):
         assert self.components[

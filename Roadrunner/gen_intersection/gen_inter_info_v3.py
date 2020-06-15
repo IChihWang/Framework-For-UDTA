@@ -77,7 +77,10 @@ def genConflictRegionData(d):
         file.write(json.dumps(tau))
 
 def genLengthData(length_dict):
-    with open("../inter_lengh_info/"+sys.argv[2]+".json", 'w') as file:
+
+    for key, value in length_dict.items():
+        length_dict[key] = value*LANE_WIDTH
+    with open("../inter_length_info/"+sys.argv[2]+".json", 'w') as file:
         file.write(json.dumps(length_dict))
 
 

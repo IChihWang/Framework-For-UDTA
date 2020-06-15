@@ -31,7 +31,7 @@ class Data:
         # rotate to corresponding cases
         if l1 >= cfg.LANE_NUM_PER_DIRECTION:
             l2 = (l2 - (l1//cfg.LANE_NUM_PER_DIRECTION)*cfg.LANE_NUM_PER_DIRECTION) % (cfg.LANE_NUM_PER_DIRECTION*4)
-            l1 = (l1 - (l1//cfg.LANE_NUM_PER_DIRECTION)*cfg.LANE_NUM_PER_DIRECTION)
+            l1 = l1 % cfg.LANE_NUM_PER_DIRECTION
 
 
         # Test if there is conflict between l1 & l2

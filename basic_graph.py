@@ -65,7 +65,7 @@ class Link:
         self.length = 0
 
         self.is_in_intersection = False
-
+        self.lane_to_in_inter_time = dict() #(lane, time)
     '''
     def updateCost(self, value):
         self.cost = value
