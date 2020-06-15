@@ -1,12 +1,15 @@
  #coding=utf-8
 import sys
+
 sys.path.append('./Roadrunner')
+
 import math
 
 from basic_graph import Node, Link, Car
 import itertools
 import global_val
 from IntersectionManager import IntersectionManager
+
 
 
 class Intersection:
@@ -26,6 +29,8 @@ class Intersection:
         for i in range(4):
             for k in range(3):  # left, straight, right
                 new_link = Link()
+
+                new_link.is_in_intersection = True
 
                 source_node = self.in_nodes[i]
                 source_node.set_connect_to_intersection(self)

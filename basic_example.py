@@ -97,10 +97,10 @@ if __name__ == '__main__':
 
 
     car_list = []
-    car_num = 20
+    car_num = 50
     for idx in range(car_num):
         car = Car()
-        car.id = "car_" + str(idx)
+        car.id = "car" + str(idx)
         car.lentgh = 5
 
         src_node_idx = random.randrange(0,grid_size*4)

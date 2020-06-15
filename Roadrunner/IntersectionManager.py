@@ -11,6 +11,7 @@ from milp import Roadrunner
 from LaneAdviser import LaneAdviser
 import global_val
 
+
 class IntersectionManager:
     def __init__(self, my_id):
         self.ID = my_id
@@ -75,6 +76,8 @@ class IntersectionManager:
         delay_list = dict() # (car, delay)
         OT_list = dict() # (car, OT)
 
+        target_car = cars[index_of_target_car]
+
         for car_idx in range(len(cars)):
             car = cars[car_idx]
             if car.position != None:
@@ -83,7 +86,7 @@ class IntersectionManager:
                 n_sched_car.append(car)
 
                 # Cars given lane advice but not scheduled
-                if car_idx != index_of_target_car:
+                if car_idx != index_of_target_car and car.position < target_car.position:
                     advised_n_sched_car.append(car)
             else:
                 delay_list[car] = car.arriving_time
@@ -95,20 +98,32 @@ class IntersectionManager:
         self.lane_advisor.updateTableFromCars(sched_car, advised_n_sched_car)
 
         for turning in [global_val.RIGHT_TURN, global_val.STRAIGHT_TURN, global_val.LEFT_TURN]:
-            target_car = cars[index_of_target_car]
             # Assign the turning to the car
             target_car.turning = turning
             target_car.speed_in_intersection = self.get_speed_in_intersection(turning)
+
             # Line advise
-            advised_lane = self.lane_advisor.adviseLane(target_car)
-            target_car.lane = advised_lane
+            if len(sched_car) == 0 and len(n_sched_car) == 1:
+                # Stay on the lane
+                pass
+            else:
+                advised_lane = self.lane_advisor.adviseLane(target_car)
+                target_car.lane = advised_lane
 
             # Reset the delays
             for car in n_sched_car:
                 delay_list[car.id] = None
 
             # Do the scheduling
-            delay_results = Roadrunner(sched_car, n_sched_car, delay_list, OT_list)
+            delay_results = dict()
+            if len(sched_car) == 0 and len(n_sched_car) == 1:
+                if turning == global_val.STRAIGHT_TURN:
+                    delay_results[target_car.id] = 0
+                else:
+                    delay_results[target_car.id] = 0.012458170110189348     # Decelerate for turning
+            else:
+                delay_results = Roadrunner(sched_car, n_sched_car, delay_list, OT_list)
+
             turning_delay[turning] = delay_results
             lane_results[turning] = target_car.lane
 

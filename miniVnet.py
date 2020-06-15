@@ -197,7 +197,7 @@ class MiniVnet:
 
                 # Check the value of the neighbors in Dijkstra
                 # Only intersection links have delay
-                if out_link.id in links_delay:
+                if out_link.is_in_intersection == True:
                     arriving_neighbor_time = current_arrival_time +  out_link.traveling_time + links_delay[out_link.id]
                 else:
                     arriving_neighbor_time = current_arrival_time +  out_link.traveling_time

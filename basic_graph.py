@@ -58,17 +58,13 @@ class Link:
         self.id = next(self.newid)
         self.in_node = None
         self.out_node = None
-        # float
-        # self.cost = [int(np.random.randint(10, size=1)) for _ in range(10)]
-        # self.traveling_time = list(np.random.uniform(low=1, high=3, size=20))
-        #self.traveling_time = [0 for _ in range(5)]
-        #TODO: change the traveling time
-        #self.traveling_time = 0 # Constant, traveling time in maximum speed
-        #self.traveling_time = np.random.uniform(low=1, high=10)
-        self.traveling_time = 0.5
+
+        self.traveling_time = 0
         self.delay = [0 for _ in range(5)]
         self.car_data_base = [[] for _ in range(5)] # 2D array
         self.length = 0
+
+        self.is_in_intersection = False
 
     '''
     def updateCost(self, value):
