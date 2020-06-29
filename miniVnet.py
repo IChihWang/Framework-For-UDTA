@@ -12,9 +12,10 @@ import scipy.io as io
 class MiniVnet:
     def __init__(self):
         self.is_compiled = False
-        self.intersections = []
+        self.intersections = dict()
         self.roads = []
-        self.sinks = []
+        self.sinks_dict = dict()
+        self.sinks_list = []
         self.nodes = []
         self.dgraph = {}
         self.intersection_nodes = []
@@ -26,14 +27,14 @@ class MiniVnet:
         assert self.is_compiled == False, "The miniVnet has been compiled"
 
         new_intersection = Intersection(name, num_lane)
-        self.intersections.append(new_intersection)
+        self.intersections[name] = new_intersection
         return new_intersection
 
     def addSink(self, name, num_lane):
         assert self.is_compiled == False, "The miniVnet has been compiled"
 
         new_sink = Sink(name, num_lane)
-        self.sinks.append(new_sink)
+        self.sinks_list.append(new_sink)
         return new_sink
 
     def connect(self, component_1, idx_1, component_2, idx_2):
@@ -49,44 +50,53 @@ class MiniVnet:
         component_2.connect(idx_2, new_road)
 
     def createGridNetwork(self, N, num_lane):
-        intersections = [[self.addIntersection('I' + str(i) + '_' + str(j), num_lane) for j in range(N)] for i in
-                         range(N)]
+        intersections = [[self.addIntersection("%3.3o"%(i) + '_' + "%3.3o"%(j), num_lane) for j in range(1,N+1)] for i in
+                         range(1,N+1)]
 
         for i in range(N):
             for j in range(N):
                 intersections[i][j].coordinate = (i,j)
 
-        sinks = [[self.addSink('S' + str(i) + '_' + str(j), num_lane) for j in range(N)] for i in range(4)]
+        sinks = [[self.addSink(None, num_lane) for j in range(N)] for i in range(4)]
 
         # Connect intersections
-        for i_row in range(N):
-            for i_col in range(1, N):
-                component_1 = intersections[i_row][i_col - 1]
-                component_2 = intersections[i_row][i_col]
+        for idx_x in range(N):
+            for idx_y in range(1, N):
+                component_1 = intersections[idx_x][idx_y - 1]
+                component_2 = intersections[idx_x][idx_y]
+                self.connect(component_1, 2, component_2, 0)
+
+        for idx_y in range(N):
+            for idx_x in range(1, N):
+                component_1 = intersections[idx_x - 1][idx_y]
+                component_2 = intersections[idx_x][idx_y]
                 self.connect(component_1, 1, component_2, 3)
-        for i_col in range(N):
-            for i_row in range(1, N):
-                component_1 = intersections[i_row - 1][i_col]
-                component_2 = intersections[i_row][i_col]
-                self.connect(component_1, 0, component_2, 2)
 
         # Connect sinks
         for i_idx in range(N):
             target_sink = sinks[0][i_idx]
             target_intersection = intersections[0][i_idx]
-            self.connect(target_sink, 0, target_intersection, 2)
+            self.connect(target_sink, 0, target_intersection, 3)
+            target_sink.set_name("000" + '_' + "%3.3o"%(i_idx+1))
+            self.sinks_dict["000" + '_' + "%3.3o"%(i_idx+1)] = target_sink
 
             target_sink = sinks[1][i_idx]
             target_intersection = intersections[i_idx][N - 1]
-            self.connect(target_sink, 0, target_intersection, 1)
+            self.connect(target_sink, 0, target_intersection, 2)
+            target_sink.set_name("%3.3o"%(i_idx+1) + '_' + "%3.3o"%(N+1))
+            self.sinks_dict["%3.3o"%(i_idx+1) + '_' + "%3.3o"%(N+1)] = target_sink
 
             target_sink = sinks[2][i_idx]
             target_intersection = intersections[N - 1][N - 1 - i_idx]
-            self.connect(target_sink, 0, target_intersection, 0)
+            self.connect(target_sink, 0, target_intersection, 1)
+            target_sink.set_name("%3.3o"%(N+1) + '_' + "%3.3o"%(N - i_idx))
+            self.sinks_dict["%3.3o"%(N+1) + '_' + "%3.3o"%(N - i_idx)] = target_sink
 
             target_sink = sinks[3][i_idx]
             target_intersection = intersections[N - 1 - i_idx][0]
-            self.connect(target_sink, 0, target_intersection, 3)
+            self.connect(target_sink, 0, target_intersection, 0)
+            target_sink.set_name("%3.3o"%(N - i_idx) + '_' + "000")
+            self.sinks_dict["%3.3o"%(N - i_idx) + '_' + "000"] = target_sink
 
         self.compile()
 
@@ -147,9 +157,9 @@ class MiniVnet:
         links_delay_record = dict()  # (link_id, {car.id, delay}) Record the new delays of all cars in same batch
         # TODO: see if we want to update AT of all cars
 
-        for intersection in self.intersections:
+        for intersection in self.intersections.values():
             intersection.initial_for_dijkstra(nodes_arrival_time, nodes_from_link, nodes_is_visit)
-        for sink in self.sinks:
+        for sink in self.sinks_list:
             sink.initial_for_dijkstra(nodes_arrival_time, nodes_from_link, nodes_is_visit)
 
         nodes_arrival_time[src_node.id] = (0 + time_bias)

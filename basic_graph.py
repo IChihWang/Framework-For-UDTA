@@ -16,6 +16,8 @@ class Node:
         self.in_intersection_lane = None
 
 
+    def set_id(self, id):
+        self.id = id
 
     def set_connect_to_intersection(self, intersection):
         self.connect_to_intersection = intersection

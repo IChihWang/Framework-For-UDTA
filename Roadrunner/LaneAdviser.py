@@ -144,7 +144,7 @@ class LaneAdviser:
         #myGraphic.gui.setTimeMatrix(self.timeMatrix)
         #myGraphic.gui.setAdviseMatrix(self.advised_lane)
 
-        return cfg.LANE_NUM_PER_DIRECTION-advise_lane-1 # The index of SUMO is reversed
+        return advise_lane
         #'''
 
 

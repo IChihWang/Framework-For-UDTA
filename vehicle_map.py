@@ -183,6 +183,10 @@ class Sink:
         self.components = None
         self.id = next(Sink.newid)
 
+    def set_name(self, name):
+        self.name = name
+        self.in_nodes.set_id(str(name)+"_i_0")
+        self.out_nodes.set_id(str(name)+"_o_0")
 
     def print_details(self):
         print(self.name, self.num_lane, self.components, self.in_nodes, self.out_nodes)
