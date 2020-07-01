@@ -22,6 +22,7 @@ import time
 import threading
 import socket
 import sys
+import global_val
 
 
 random.seed(0)
@@ -36,6 +37,8 @@ def worker(my_net, cars):
 def handle_routing(my_net, car_dict, new_car_dict):
 
     car_list = list(new_car_dict.values())
+    #car_list = list(car_dict.values())
+    route_car_id_dict = dict()
 
     thread_num = 5
     car_num_per_thread = len(car_list)//thread_num+1
@@ -47,6 +50,14 @@ def handle_routing(my_net, car_dict, new_car_dict):
         total_cost = 0
         path_diff_count = 0
 
+        # Record which cars are been routed
+        for car in car_list:
+            if car.id not in route_car_id_dict:
+                route_car_id_dict[car.id] = car
+
+        # TODO: Dummy for debug
+        for car in car_list:
+            my_net.choose_car([car])
 
         threads = []
         for car_idx in range(0, len(car_list), car_num_per_thread):
@@ -57,7 +68,6 @@ def handle_routing(my_net, car_dict, new_car_dict):
 
             # clear car from the database
 
-            #cars = my_net.choose_car([car])
             #car = cars[0]
 
 
@@ -78,7 +88,6 @@ def handle_routing(my_net, car_dict, new_car_dict):
                 #print(car.id, car.path_node)
                 path_diff_count += 1
 
-            print(car.id, car.path_node)
             sys.stdout.flush()
         #print(path_diff_count)
         #print("=============", total_cost/car_num)
@@ -86,6 +95,8 @@ def handle_routing(my_net, car_dict, new_car_dict):
 
     print(time.time() - TiStamp1, "sec")
     my_net.get_car_time_space_list(car_list);
+
+    return route_car_id_dict
 
 def SUMO_Handler(sock):
 
@@ -106,8 +117,7 @@ def SUMO_Handler(sock):
         data = ""
         while len(data) == 0 or data[-1] != "@":
             data += sock.recv(8192)
-        sock.sendall("Got it @")
-
+        print(data)
         # Parse data
         data = data[0:-2]   # Remove ";@"
         cars_str_list = data.split(";")
@@ -136,6 +146,7 @@ def SUMO_Handler(sock):
                 time_offset = float(car_data[4])
 
                 # Parse source node
+                car = cars_dict[car_id]
                 car.src_node = None
                 intersection_id = car_data[5]
                 inter_id_list = intersection_id.split("_")
@@ -149,12 +160,43 @@ def SUMO_Handler(sock):
                     intersection_direction = int(car_data[6])
                     car.src_node = my_net.intersections[intersection_id].out_nodes[intersection_direction]
 
+        # Handle the route
+        route_car_id_dict = handle_routing(my_net, cars_dict, new_car_dict)
 
 
-        handle_routing(my_net, cars_dict, new_car_dict)
+        # Construct message
+        server_send_str = ""
+        for car_id, car in route_car_id_dict.items():
+            server_send_str += car_id + ","
 
+            # path: in_node -----> (link) -----> out_node -----> (next_link)
+            for link_idx in range(len(car.path_link)-1):
+                _, _, link = car.path_link[link_idx]
+                delay, lane, next_link = car.path_link[link_idx+1]
+                enter_link_time, in_node = car.path_node[link_idx]
+                _, out_node = car.path_node[link_idx+1]
 
-        print("send")
+                intersection = out_node.get_connect_to_intersection()
+                if intersection != None:
+                    server_send_str += intersection.name + ":"
+                    turning = out_node.link_to_turn[next_link]
+
+                    if turning == global_val.LEFT_TURN:
+                        server_send_str += "L/"
+                    elif turning == global_val.STRAIGHT_TURN:
+                        server_send_str += "S/"
+                    elif turning == global_val.RIGHT_TURN:
+                        server_send_str += "R/"
+                    else:
+                        # For debug
+                        print("ERROR: No turning")
+
+            server_send_str += ";"
+
+        server_send_str += "@"
+
+        sock.sendall(server_send_str)
+
         sys.stdout.flush()
 
 
