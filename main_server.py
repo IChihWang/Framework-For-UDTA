@@ -117,10 +117,10 @@ def SUMO_Handler(sock):
         data = ""
         while len(data) == 0 or data[-1] != "@":
             data += sock.recv(8192)
-        print(data)
         # Parse data
         data = data[0:-2]   # Remove ";@"
         cars_str_list = data.split(";")
+        print("rcv: ", data)
 
         new_car_dict = dict()   # To give thses care higher priorities
 
@@ -195,6 +195,8 @@ def SUMO_Handler(sock):
 
         server_send_str += "@"
 
+
+        print("snd: ", server_send_str)
         sock.sendall(server_send_str)
 
         sys.stdout.flush()
