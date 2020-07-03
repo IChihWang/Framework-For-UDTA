@@ -98,3 +98,6 @@ class Car:
         self.speed_in_intersection = None
 
         self.traveling_time = 0
+
+        # For SUMO
+        self.time_offset = 0

@@ -1,7 +1,6 @@
 
 import sys
 import config as cfg
-import traci
 import threading
 import random
 

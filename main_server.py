@@ -32,7 +32,7 @@ np.random.seed(0)
 def worker(my_net, cars):
     # My_net is read-only
     for car in cars:
-        my_net.dijkstra(car, car.src_node, car.dst_node, 0)
+        my_net.dijkstra(car, car.src_node, car.dst_node, car.time_offset)
 
 def handle_routing(my_net, car_dict, new_car_dict):
 
@@ -40,7 +40,7 @@ def handle_routing(my_net, car_dict, new_car_dict):
     #car_list = list(car_dict.values())
     route_car_id_dict = dict()
 
-    thread_num = 5
+    thread_num = 4
     car_num_per_thread = len(car_list)//thread_num+1
     TiStamp1 = time.time()
 
@@ -144,6 +144,7 @@ def SUMO_Handler(sock):
                     new_car_dict[car_id] = car
 
                 time_offset = float(car_data[4])
+                car.time_offset = time_offset
 
                 # Parse source node
                 car = cars_dict[car_id]
@@ -152,6 +153,7 @@ def SUMO_Handler(sock):
                 inter_id_list = intersection_id.split("_")
                 inter_id_x = int(inter_id_list[0])
                 inter_id_y = int(inter_id_list[1])
+
                 if inter_id_x == 0 or inter_id_y == 0 or inter_id_x == grid_size+1 or inter_id_y == grid_size+1:
                     # Sinc
                     car.src_node = my_net.sinks_dict[intersection_id].out_nodes
@@ -203,9 +205,15 @@ def SUMO_Handler(sock):
 
 
 if __name__ == '__main__':
-    HOST, PORT = "localhost", 9999
+    HOST, PORT = "128.238.147.124", 9999
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.bind((HOST, PORT))
-    server_sock.listen(5)
-    sock, addr = server_sock.accept()
-    SUMO_Handler(sock)
+    print("start server")
+
+    try:
+        server_sock.listen(5)
+        sock, addr = server_sock.accept()
+        print("Got a connection from: ", addr)
+        SUMO_Handler(sock)
+    except:
+        pass
