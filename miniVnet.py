@@ -10,7 +10,7 @@ import numpy
 import scipy.io as io
 
 class MiniVnet:
-    def __init__(self):
+    def __init__(self, scheduling_period, routing_period):
         self.is_compiled = False
         self.intersections = dict()
         self.roads = []
@@ -21,6 +21,8 @@ class MiniVnet:
         self.intersection_nodes = []
         self.sink_nodes = []
         self.car_number = 0
+        self.scheduling_period = scheduling_period  # Time for sheduling
+        self.routing_period = routing_period    # How many scheduling periods per routing
 
     # ================ Setup the network ====================
     def addIntersection(self, name, num_lane):
@@ -134,7 +136,9 @@ class MiniVnet:
                 link = car_record["link"]
                 time_cars = car_record["time_car"]
                 for time_idx, copied_car in time_cars:
-                    link.car_data_base[time_idx].remove(copied_car)
+                    current_time_idx = time_idx - car.time_offset_counter
+                    if current_time_idx >= 0:
+                        link.car_data_base[time_idx].remove(copied_car)
             # Clear paths
             car.path_node = []
             car.path_link = []
@@ -187,8 +191,8 @@ class MiniVnet:
                 if next_intersection != None:
                     # TODO: build a "new car"
                     new_car = Car()
-                    current_arrival_time_idx = int(math.floor(current_arrival_time))
-                    new_car.position = out_link.length - ((current_arrival_time - current_arrival_time_idx) * global_val.MAX_SPEED)
+                    current_arrival_time_idx = int(current_arrival_time//self.scheduling_period)
+                    new_car.position = out_link.length - ((current_arrival_time - current_arrival_time_idx*self.scheduling_period) * global_val.MAX_SPEED)
 
 
                     next_intersection.update_cost_with_manager(current_arrival_time_idx, next_node, new_car, links_delay, links_lane, links_delay_record)
@@ -281,15 +285,15 @@ class MiniVnet:
                 turn = out_node.get_turn_from_link(next_link)
 
                 # compute the position on the link
-                enter_link_time_idx = int(math.floor(enter_link_time))
-                init_position = link.length - ((enter_link_time - enter_link_time_idx) * global_val.MAX_SPEED)
+                enter_link_time_idx = int(enter_link_time//self.scheduling_period)
+                init_position = link.length - ((enter_link_time - enter_link_time_idx*self.scheduling_period) * global_val.MAX_SPEED)
 
                 # compute the traveling time
                 actual_travel_time = link.traveling_time + delay
 
                 # expend the list size if not enough
                 if len(link.car_data_base) - 1 < enter_link_time_idx:
-                    for _ in range(enter_link_time_idx-(len(link.car_data_base) - 1)):
+                    for _ in range(0, enter_link_time_idx-(len(link.car_data_base) - 1)):
                         link.car_data_base.append([])
 
 
@@ -307,10 +311,10 @@ class MiniVnet:
 
 
                 # 2. add the future car into the database "scheduled"
-                current_time_step = 1
+                current_time_step = self.scheduling_period
                 remaining_actual_travel_time = actual_travel_time - current_time_step
                 while remaining_actual_travel_time >= 0:
-                    current_time_idx = int(math.floor(enter_link_time + current_time_step))
+                    current_time_idx = int((enter_link_time + current_time_step)//self.scheduling_period)
                     if len(link.car_data_base) - 1 < current_time_idx:
                         link.car_data_base.append([])
 
@@ -325,9 +329,19 @@ class MiniVnet:
                     link.car_data_base[current_time_idx].append(scheduled_copy_car)
                     car.recorded_in_database[link.id]["time_car"].append((current_time_idx,scheduled_copy_car))
 
-                    current_time_step = current_time_step+1
+                    current_time_step += self.scheduling_period
                     remaining_actual_travel_time = actual_travel_time - current_time_step
 
+    # =========== take a time step ====================== #
+    def take_a_step(self, all_cars_dict):
+        # Handle car
+        for car in all_cars_dict.values():
+            car.time_offset_counter += self.routing_period
+
+        # Handle link database
+        for road in self.roads:
+            for link in road.link_groups:
+                link.car_data_base = link.car_data_base[self.routing_period:]
 
     def get_speed_in_intersection(self, turn):
         turn_speed = 0

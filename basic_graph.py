@@ -101,3 +101,4 @@ class Car:
 
         # For SUMO
         self.time_offset = 0
+        self.time_offset_counter = 0    # For time moving forward
