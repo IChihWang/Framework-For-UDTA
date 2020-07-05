@@ -131,6 +131,8 @@ class MiniVnet:
         chosen_cars = [cars[0]]
 
         for car in chosen_cars:
+            car.time_offset_counter = 0
+
             # Remove car from the databases
             for link_id, car_record in car.recorded_in_database.items():
                 link = car_record["link"]
