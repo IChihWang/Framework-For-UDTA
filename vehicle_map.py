@@ -35,7 +35,8 @@ class Intersection:
 
                 source_node = self.in_nodes[i]
                 source_node.set_connect_to_intersection(self)
-                source_node.set_in_intersection_lane(i * num_lane)
+                #source_node.set_in_intersection_lane(i * num_lane)
+                source_node.set_in_intersection_lane(i * global_val.LANE_NUM_PER_DIRECTION)
                 source_node.add_out_links(k, new_link)
                 new_link.in_node = source_node
 

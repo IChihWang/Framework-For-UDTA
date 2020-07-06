@@ -41,7 +41,7 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_):
     #car_list = list(.values())
     route_car_id_dict = dict()
 
-    thread_num = 4
+    thread_num = 1
     car_num_per_thread = len(car_list)//thread_num+1
 
 
@@ -115,6 +115,7 @@ def SUMO_Handler(sock):
 
     # Car list
     all_cars_dict = dict()   #(car_id, Car)  Recorded all cars
+    all_cars_in_time = dict()
 
     while True:
         handle_cars_dict = dict()   #(car_id, Car)  Cars from SUMO
@@ -133,7 +134,7 @@ def SUMO_Handler(sock):
         cars_str_list = data.split(";")
         if len(data) == 0:
             cars_str_list = []  # Clear the element if it is empty
-        print("rcv: ", data)
+        #print("rcv: ", data)
 
 
         for car_str in cars_str_list:
@@ -142,7 +143,9 @@ def SUMO_Handler(sock):
             car_status = car_data[1]
 
             if car_status == "Exit":
+                print(car_id, all_cars_dict[car_id].traveling_time+2*(200/global_val.MAX_SPEED)-all_cars_in_time[car_id])
                 del all_cars_dict[car_id]
+                del all_cars_in_time[car_id]
             else:
                 if car_status == "NEW":
                     car = Car()
@@ -155,6 +158,7 @@ def SUMO_Handler(sock):
                     all_cars_dict[car_id] = car
                     new_car_dict[car_id] = car
 
+                    all_cars_in_time[car_id] = float(car_data[4])
 
                 # Parse source node
                 car = all_cars_dict[car_id]
@@ -217,7 +221,7 @@ def SUMO_Handler(sock):
         print(time.time() - TiStamp1, "sec")
 
 
-        print("snd: ", server_send_str)
+        #print("snd: ", server_send_str)
         sock.sendall(server_send_str)
 
         sys.stdout.flush()

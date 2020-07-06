@@ -103,8 +103,8 @@ class IntersectionManager:
 
             # Line advise
             if len(sched_car) == 0 and len(n_sched_car) == 1:
-                # Stay on the lane
-                pass
+                advised_lane = self.lane_advisor.adviseLaneFast(target_car)
+                target_car.lane = advised_lane
             else:
                 advised_lane = self.lane_advisor.adviseLane(target_car)
                 target_car.lane = advised_lane

@@ -193,9 +193,9 @@ class MiniVnet:
                 if next_intersection != None:
                     # TODO: build a "new car"
                     new_car = Car()
+                    new_car.id = car.id
                     current_arrival_time_idx = int(current_arrival_time//self.scheduling_period)
                     new_car.position = out_link.length - ((current_arrival_time - current_arrival_time_idx*self.scheduling_period) * global_val.MAX_SPEED)
-
 
                     next_intersection.update_cost_with_manager(current_arrival_time_idx, next_node, new_car, links_delay, links_lane, links_delay_record)
 
@@ -271,11 +271,17 @@ class MiniVnet:
         # the time_bias is included during routing
 
         # path: in_node -----> (link) -----> out_node -----> (next_link)
+        if car.id == 'car_6' or car.id == 'car_4':
+            print(car.id, car.path_node)
+
         for link_idx in range(len(car.path_link)-1):
             _, _, link = car.path_link[link_idx]
             delay, lane, next_link = car.path_link[link_idx+1]
             enter_link_time, in_node = car.path_node[link_idx]
             _, out_node = car.path_node[link_idx+1]
+
+            if car.id == 'car_6' or car.id == 'car_4':
+                print(car.id, lane, delay, out_node.id)
 
             # Only store the car info in the "road" (connected to the intersection)
             # next_link: links inside the intersection

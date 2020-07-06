@@ -8,6 +8,10 @@ import numpy
 import global_val
 #import myGraphic
 
+from get_inter_length_info import Data
+
+inter_length_data = Data()
+
 RESOLUTION = 2  # According to gen_advise.cpp
 
 class LaneAdviser:
@@ -61,12 +65,36 @@ class LaneAdviser:
 
         #myGraphic.gui.setTimeMatrix(self.timeMatrix)
     # Give lane advice to Cars
+    def adviseLaneFast(self, car):
+        # Sort out the LOTs and list the candidates
+        start_lane = (car.lane//cfg.LANE_NUM_PER_DIRECTION)*cfg.LANE_NUM_PER_DIRECTION
+
+        # Get the shortest or the most ideal lane
+        ideal_lane = None
+        if car.turning == global_val.RIGHT_TURN:
+            ideal_lane = start_lane+cfg.LANE_NUM_PER_DIRECTION-1
+        elif car.turning == global_val.LEFT_TURN:
+            ideal_lane = start_lane
+        elif car.turning == global_val.STRAIGHT_TURN:
+            occup_time_list = [self.getMaxTime(start_lane+idx, car.turning, self.timeMatrix)+inter_length_data.getIntertime(idx, car.turning) for idx in range(cfg.LANE_NUM_PER_DIRECTION)]
+            candidate_list = numpy.argsort(occup_time_list)
+
+            # find one mid-lane with smallest LOTs
+            if cfg.LANE_NUM_PER_DIRECTION > 2:
+                ideal_lane = start_lane+candidate_list[0]
+            else:
+                for lane_idx in candidate_list:
+                    if lane_idx != 0 and lane_idx != cfg.LANE_NUM_PER_DIRECTION:
+                        ideal_lane = start_lane+lane_idx
+                        break
+        return ideal_lane
+
     def adviseLane(self, car):
         advise_lane = None
         # Sort out the LOTs and list the candidates
         start_lane = (car.lane//cfg.LANE_NUM_PER_DIRECTION)*cfg.LANE_NUM_PER_DIRECTION
 
-        occup_time_list = [self.getMaxTime(start_lane+idx, car.turning, self.timeMatrix) for idx in range(cfg.LANE_NUM_PER_DIRECTION)]
+        occup_time_list = [self.getMaxTime(start_lane+idx, car.turning, self.timeMatrix)+inter_length_data.getIntertime(idx, car.turning) for idx in range(cfg.LANE_NUM_PER_DIRECTION)]
 
         candidate_list = numpy.argsort(occup_time_list)
 
@@ -91,6 +119,7 @@ class LaneAdviser:
             exit()
 
         advise_lane = ideal_lane
+
 
         # Scan through the candidates and see if we want to change our candidates
         # Get the cost of the ideal trajectory
@@ -140,7 +169,6 @@ class LaneAdviser:
         # Record the given lane
         self.advised_lane[(car.lane//cfg.LANE_NUM_PER_DIRECTION, self.turn_to_str(car.turning))] = advise_lane
         # Change the exact index to the lane index of one direction
-        advise_lane = advise_lane%cfg.LANE_NUM_PER_DIRECTION
         #myGraphic.gui.setTimeMatrix(self.timeMatrix)
         #myGraphic.gui.setAdviseMatrix(self.advised_lane)
 
