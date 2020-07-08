@@ -24,6 +24,9 @@ class MiniVnet:
         self.scheduling_period = scheduling_period  # Time for sheduling
         self.routing_period = routing_period    # How many scheduling periods per routing
 
+        self.route_database_num = 10    # Top 10 congested
+        self.route_database_list = []   # [(time_idx,database),]
+
     # ================ Setup the network ====================
     def addIntersection(self, name, num_lane):
         assert self.is_compiled == False, "The miniVnet has been compiled"
@@ -125,14 +128,27 @@ class MiniVnet:
         # self.dijkstra(car)
         # self.update_map(car)
 
-    def choose_car(self, cars):
+    def choose_car(self, all_cars_dict, new_car):
         # Choose Cars
         # TODO: dummy function
-        chosen_cars = [cars[0]]
+
+
+        '''
+        time_label_idx, inter_, compare_database = self.route_database_list[database_idx]
+        '''
+
+        chosen_cars = []
+        for _, _, car_id_list in self.route_database_list:
+            for car_id in car_id_list:
+                car = all_cars_dict[car_id]
+                if car not in chosen_cars:
+                    chosen_cars.append(car)
+        chosen_cars += new_car
+
+        # TODO: decide Thread
+
 
         for car in chosen_cars:
-            car.time_offset_counter = 0
-
             # Remove car from the databases
             for link_id, car_record in car.recorded_in_database.items():
                 link = car_record["link"]
@@ -140,10 +156,16 @@ class MiniVnet:
                 for time_idx, copied_car in time_cars:
                     current_time_idx = time_idx - car.time_offset_counter
                     if current_time_idx >= 0:
-                        link.car_data_base[time_idx].remove(copied_car)
+                        link.car_data_base[current_time_idx].remove(copied_car)
+
+
+            # Set the time offset counter to zero
+            car.time_offset_counter = 0
+
             # Clear paths
             car.path_node = []
             car.path_link = []
+            car.recorded_in_database = dict()
 
         return chosen_cars
 
@@ -266,26 +288,62 @@ class MiniVnet:
             print(link, link.id, delay, lane)
         '''
 
+    def add_database_to_sort_database(self, intersection, time_idx):
+
+        # The node is going to be removed, so skip
+        if time_idx < self.routing_period:
+            return
+
+        # Maintain a list with top "self.route_database_num" congested links
+        car_id_list = []
+        for in_node in intersection.in_nodes:
+            link = in_node.in_links[0]
+            if len(link.car_data_base) > time_idx:
+                for car in link.car_data_base[time_idx]:
+                    car_id_list.append(car.id)
+
+        car_num_in_database = len(car_id_list)
+
+        # Remove the duplicated one from the route_database_list
+        rm_idx = None
+        for idx in range(len(self.route_database_list)):
+            t_idx, inter, _ = self.route_database_list[idx]
+            if (t_idx, inter) == (time_idx, intersection):
+                rm_idx = idx
+                break
+        if rm_idx != None:
+            self.route_database_list.pop(rm_idx)
+
+        # Insert the database
+        insert_database_idx = 0
+        for database_idx in reversed(range(len(self.route_database_list))):
+            time_label_idx, inter_, compare_database = self.route_database_list[database_idx]
+            if len(compare_database) > car_num_in_database:
+                insert_database_idx = database_idx+1
+                break
+        self.route_database_list.insert(insert_database_idx, (time_idx, intersection, car_id_list))
+
+        # Remove the extra one
+        if len(self.route_database_list) > self.route_database_num:
+            self.route_database_list.pop()
+
+
     # =========== Update the cost with given path ====================== #
     def update_map(self, car):
         # the time_bias is included during routing
 
         # path: in_node -----> (link) -----> out_node -----> (next_link)
-        if car.id == 'car_6' or car.id == 'car_4':
-            print(car.id, car.path_node)
-
         for link_idx in range(len(car.path_link)-1):
             _, _, link = car.path_link[link_idx]
             delay, lane, next_link = car.path_link[link_idx+1]
             enter_link_time, in_node = car.path_node[link_idx]
             _, out_node = car.path_node[link_idx+1]
 
-            if car.id == 'car_6' or car.id == 'car_4':
-                print(car.id, lane, delay, out_node.id)
 
             # Only store the car info in the "road" (connected to the intersection)
             # next_link: links inside the intersection
-            if out_node.get_connect_to_intersection() != None:
+            current_intersection = out_node.get_connect_to_intersection()
+            if current_intersection != None:
                 # Record which database is added with the car
                 car.recorded_in_database[link.id] = {"link":link, "time_car":[]}
 
@@ -317,6 +375,8 @@ class MiniVnet:
                 link.car_data_base[enter_link_time_idx].append(unscheduled_copy_car)
                 car.recorded_in_database[link.id]["time_car"].append((enter_link_time_idx,unscheduled_copy_car))
 
+                self.add_database_to_sort_database(current_intersection, enter_link_time_idx)
+
 
                 # 2. add the future car into the database "scheduled"
                 current_time_step = self.scheduling_period
@@ -337,6 +397,8 @@ class MiniVnet:
                     link.car_data_base[current_time_idx].append(scheduled_copy_car)
                     car.recorded_in_database[link.id]["time_car"].append((current_time_idx,scheduled_copy_car))
 
+                    self.add_database_to_sort_database(current_intersection, current_time_idx)
+
                     current_time_step += self.scheduling_period
                     remaining_actual_travel_time = actual_travel_time - current_time_step
 
@@ -350,6 +412,20 @@ class MiniVnet:
         for road in self.roads:
             for link in road.link_groups:
                 link.car_data_base = link.car_data_base[self.routing_period:]
+
+        # Handle the congested link list
+        delete_database_list = []
+        for database_idx in range(len(self.route_database_list)):
+            time_label_idx, intersection, car_id_list = self.route_database_list[database_idx]
+            time_label_idx -= self.routing_period
+            if time_label_idx >= 0:
+                self.route_database_list[database_idx] = (time_label_idx, intersection, car_id_list)
+            else:
+                delete_database_list.append(database_idx)
+        for database_idx in reversed(delete_database_list):
+            del self.route_database_list[database_idx]
+
+
 
     def get_speed_in_intersection(self, turn):
         turn_speed = 0

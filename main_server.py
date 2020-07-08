@@ -35,9 +35,9 @@ def worker(my_net, cars):
     for car in cars:
         my_net.dijkstra(car, car.src_node, car.dst_node, car.time_offset)
 
-def handle_routing(my_net, all_cars_dict, handle_car_dict, new_):
+def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car):
 
-    car_list = list(new_.values())
+    car_list = list(new_car.values())
     #car_list = list(.values())
     route_car_id_dict = dict()
 
@@ -56,8 +56,7 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_):
                 route_car_id_dict[car.id] = car
 
         # TODO: Dummy for debug
-        for car in car_list:
-            my_net.choose_car([car])
+        my_net.choose_car(all_cars_dict, car_list)
 
         threads = []
         for car_idx in range(0, len(car_list), car_num_per_thread):
@@ -93,10 +92,7 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_):
         #print("=============", total_cost/car_num)
 
 
-    my_net.get_car_time_space_list(car_list);
-
-    # My net take a time step
-    my_net.take_a_step(all_cars_dict)
+        #my_net.get_car_time_space_list(car_list);
 
     return route_car_id_dict
 
@@ -223,6 +219,10 @@ def SUMO_Handler(sock):
 
         #print("snd: ", server_send_str)
         sock.sendall(server_send_str)
+
+
+        # My net take a time step
+        my_net.take_a_step(all_cars_dict)
 
         sys.stdout.flush()
 
