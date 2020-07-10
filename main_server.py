@@ -229,7 +229,7 @@ def SUMO_Handler(sock):
 
 if __name__ == '__main__':
     #HOST, PORT = "128.238.147.124", 9999
-    HOST, PORT = "localhost", 9999
+    HOST, PORT = "localhost", 9909
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.bind((HOST, PORT))
     print("start server")
