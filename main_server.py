@@ -23,6 +23,7 @@ import threading
 import socket
 import sys
 import global_val
+import csv
 
 import traceback
 
@@ -244,13 +245,23 @@ def SUMO_Handler(sock):
         sys.stdout.flush()
 
     average_computation_time = sum(compute_time_list)/len(compute_time_list)
-    print(average_computation_time)
+    max_computation_time = max(compute_time_list)
+
+
+    with open('../result/computation_time.csv', 'a') as csvfile:
+        file_writer = csv.writer(csvfile, lineterminator='\n')
+        to_write_list = [sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7]]
+        to_write_list.append(average_computation_time)
+        to_write_list.append(max_computation_time)
+        file_writer.writerow(to_write_list)
 
 
 
 if __name__ == '__main__':
     print("Usage: python code.py <choose_car_algorithm> <iteration_num> <thread_num> <Top N number>")
+    print("--------------------- <arrival_rate> <rand_seed> <grid_size>")
     sys.argv[4]
+    sys.argv[7]
 
     #HOST, PORT = "128.238.147.124", 9999
     HOST, PORT = "localhost", 9909
