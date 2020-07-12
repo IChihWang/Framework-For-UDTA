@@ -190,7 +190,7 @@ class MiniVnet:
 
                             min_bfs_tree = min(bfs_tree_list, key=lambda x: len(x))
                             bfs_tree_list.remove(min_bfs_tree)
-                            database_lists += bfs_tree_list
+                            database_lists += min_bfs_tree
                             break
 
                 # convert the database_list to cars
