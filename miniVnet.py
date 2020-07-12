@@ -10,7 +10,7 @@ import numpy
 import scipy.io as io
 
 class MiniVnet:
-    def __init__(self, scheduling_period, routing_period):
+    def __init__(self, scheduling_period, routing_period, thread_num, choose_top_N):
         self.is_compiled = False
         self.intersections = dict()
         self.roads = []
@@ -24,8 +24,10 @@ class MiniVnet:
         self.scheduling_period = scheduling_period  # Time for sheduling
         self.routing_period = routing_period    # How many scheduling periods per routing
 
-        self.route_database_num = 10    # Top 10 congested
+        self.route_database_num = choose_top_N    # Top 10 congested
         self.route_database_list = []   # [(time_idx,database),]
+        self.thread_num = thread_num
+        self.min_database_per_thread = math.ceil(float(self.route_database_num)/self.thread_num)
 
     # ================ Setup the network ====================
     def addIntersection(self, name, num_lane):
@@ -128,7 +130,7 @@ class MiniVnet:
         # self.dijkstra(car)
         # self.update_map(car)
 
-    def choose_car(self, all_cars_dict, new_car):
+    def choose_car(self, all_cars_dict, handle_car_dict, new_car, choose_car_mode):
         # Choose Cars
         # TODO: dummy function
 
@@ -136,14 +138,142 @@ class MiniVnet:
         '''
         time_label_idx, inter_, compare_database = self.route_database_list[database_idx]
         '''
-
+        cars_for_threads = []   # list of list of cars
         chosen_cars = []
-        for _, _, car_id_list in self.route_database_list:
-            for car_id in car_id_list:
-                car = all_cars_dict[car_id]
-                if car not in chosen_cars:
-                    chosen_cars.append(car)
-        chosen_cars += new_car
+
+        if choose_car_mode == 0:
+            if self.thread_num == 1:
+                # Top N intersection
+                for _, _, car_id_list in self.route_database_list:
+                    for car_id in car_id_list:
+                        car = all_cars_dict[car_id]
+                        if car not in chosen_cars and car in handle_car_dict.values():
+                            chosen_cars.append(car)
+
+                for car in new_car:
+                    if car not in chosen_cars:
+                        chosen_cars += new_car
+                cars_for_threads.append(chosen_cars)
+            else:
+                top_N_list = []
+                # Top N intersection
+                for _, _, car_id_list in self.route_database_list:
+                    top_N_list.append(car_id_list)
+
+                bfs_tree_idx = -1   # Start from zero. Tricky part for while
+                bfs_tree_list = []     # M threads- M list- with k of the top_N_list
+
+
+                while len(top_N_list) > 0:
+                    bfs_tree_idx += 1
+                    bfs_tree_list.append([])
+                    queue = [top_N_list[0]]
+                    visited = [top_N_list[0]]
+                    bfs_tree_list[bfs_tree_idx].append(top_N_list[0])
+
+                    # BFS
+                    while len(queue) > 0:
+                        current_database = queue.pop(0)
+                        for database_list in top_N_list:
+                            if database_list not in visited:
+                                if len(set(current_database) & set(database_list)) > 0:
+                                    bfs_tree_list[bfs_tree_idx].append(database_list)
+                                    visited.append(database_list)
+                                    queue.append(database_list)
+
+                    for database_list in bfs_tree_list[bfs_tree_idx]:
+                        top_N_list.remove(database_list)
+                while len(bfs_tree_list) > self.thread_num:
+                    # merge the list
+                    for database_lists in bfs_tree_list:
+                        if len(database_lists) < self.min_database_per_thread:
+
+                            min_bfs_tree = min(bfs_tree_list, key=lambda x: len(x))
+                            bfs_tree_list.remove(min_bfs_tree)
+                            database_lists += bfs_tree_list
+                            break
+
+                # convert the database_list to cars
+                for thread_idx in range(len(bfs_tree_list)):
+                    cars_for_threads.append([])
+                    for car_id_list in bfs_tree_list[thread_idx]:
+                        for car_id in car_id_list:
+                            car = all_cars_dict[car_id]
+                            if car not in chosen_cars and car in handle_car_dict.values():
+                                chosen_cars.append(car)
+                                cars_for_threads[thread_idx].append(car)
+                for _ in range(self.thread_num-len(cars_for_threads)):
+                    cars_for_threads.append([])
+
+                for car in new_car:
+                    if car not in chosen_cars:
+                        # Insert the car to the thread with the minimal numbers of cars
+                        min_ars_for_thread = min(cars_for_threads, key=lambda x: len(x))
+                        min_ars_for_thread.append(car)
+
+                chosen_cars += new_car
+            del new_car[:]
+        elif choose_car_mode == 1:
+            if self.thread_num == 1:
+                # Top N intersection
+                for _, _, car_id_list in self.route_database_list:
+                    for car_id in car_id_list:
+                        car = all_cars_dict[car_id]
+                        if car not in chosen_cars and car in handle_car_dict.values():
+                            chosen_cars.append(car)
+
+                for car in new_car:
+                    if car not in chosen_cars:
+                        chosen_cars += new_car
+                cars_for_threads.append(chosen_cars)
+            else:
+                cars_for_threads.append([])
+                cars_for_threads_idx = 0
+                route_database_count = 0
+                # Top N intersection
+                for _, _, car_id_list in self.route_database_list:
+                    if route_database_count > self.min_database_per_thread:
+                        route_database_count = 0
+                        cars_for_threads.append([])
+                        cars_for_threads_idx += 1
+
+                    for car_id in car_id_list:
+                        car = all_cars_dict[car_id]
+                        if car not in chosen_cars and car in handle_car_dict.values():
+                            chosen_cars.append(car)
+                            cars_for_threads[cars_for_threads_idx].append(car)
+
+                    route_database_count += 1
+
+
+                for _ in range(self.thread_num-len(cars_for_threads)):
+                    cars_for_threads.append([])
+
+                for car in new_car:
+                    if car not in chosen_cars:
+                        chosen_cars.append(car)
+                        # Insert the car to the thread with the minimal numbers of cars
+                        min_ars_for_thread = min(cars_for_threads, key=lambda x: len(x))
+                        min_ars_for_thread.append(car)
+
+                #chosen_cars += new_car
+            del new_car[:]
+
+        elif choose_car_mode == 2:
+            # Only for one thread
+            for _ in range(self.thread_num-1):
+                cars_for_threads.append([])
+            chosen_cars += new_car
+            cars_for_threads.append(chosen_cars)
+        elif choose_car_mode == 3:
+            # Only for one thread
+            for _ in range(self.thread_num-1):
+                cars_for_threads.append([])
+            chosen_cars = handle_car_dict.values()
+            cars_for_threads.append(chosen_cars)
+        else:
+            print("Wrong choose car mode")
+            exit()
 
         # TODO: decide Thread
 
@@ -167,7 +297,8 @@ class MiniVnet:
             car.path_link = []
             car.recorded_in_database = dict()
 
-        return chosen_cars
+
+        return cars_for_threads, chosen_cars
 
 
     # =========== Use the DataStructure to route ====================== #
@@ -300,7 +431,8 @@ class MiniVnet:
             link = in_node.in_links[0]
             if len(link.car_data_base) > time_idx:
                 for car in link.car_data_base[time_idx]:
-                    car_id_list.append(car.id)
+                    if car.position != None:
+                        car_id_list.append(car.id)
 
         car_num_in_database = len(car_id_list)
 
@@ -346,7 +478,8 @@ class MiniVnet:
             if current_intersection != None:
                 # Record which database is added with the car
                 car.recorded_in_database[link.id] = {"link":link, "time_car":[]}
-
+                #if car.id == "car_4":
+                    #print(car.id, len(car.path_link))
                 # Get the turns from the node
                 turn = out_node.get_turn_from_link(next_link)
 

@@ -99,6 +99,11 @@ class Car:
 
         self.traveling_time = 0
 
+        self.src_node = None
+        self.src_node_str = None
+        self.is_src_sink = False
+        self.dst_node = None
+
         # For SUMO
         self.time_offset = 0
         self.time_offset_counter = 0    # For time moving forward
