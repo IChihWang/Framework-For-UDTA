@@ -57,7 +57,7 @@ class MiniVnet:
         component_2.connect(idx_2, new_road)
 
     def createGridNetwork(self, N, num_lane):
-        intersections = [[self.addIntersection("%3.3o"%(i) + '_' + "%3.3o"%(j), num_lane) for j in range(1,N+1)] for i in
+        intersections = [[self.addIntersection("00%i"%(i) + '_' + "00%i"%(j), num_lane) for j in range(1,N+1)] for i in
                          range(1,N+1)]
 
         for i in range(N):
@@ -84,26 +84,26 @@ class MiniVnet:
             target_sink = sinks[0][i_idx]
             target_intersection = intersections[0][i_idx]
             self.connect(target_sink, 0, target_intersection, 3)
-            target_sink.set_name("000" + '_' + "%3.3o"%(i_idx+1))
-            self.sinks_dict["000" + '_' + "%3.3o"%(i_idx+1)] = target_sink
+            target_sink.set_name("000" + '_' + "00%i"%(i_idx+1))
+            self.sinks_dict["000" + '_' + "00%i"%(i_idx+1)] = target_sink
 
             target_sink = sinks[1][i_idx]
             target_intersection = intersections[i_idx][N - 1]
             self.connect(target_sink, 0, target_intersection, 2)
-            target_sink.set_name("%3.3o"%(i_idx+1) + '_' + "%3.3o"%(N+1))
-            self.sinks_dict["%3.3o"%(i_idx+1) + '_' + "%3.3o"%(N+1)] = target_sink
+            target_sink.set_name("00%i"%(i_idx+1) + '_' + "00%i"%(N+1))
+            self.sinks_dict["00%i"%(i_idx+1) + '_' + "00%i"%(N+1)] = target_sink
 
             target_sink = sinks[2][i_idx]
             target_intersection = intersections[N - 1][N - 1 - i_idx]
             self.connect(target_sink, 0, target_intersection, 1)
-            target_sink.set_name("%3.3o"%(N+1) + '_' + "%3.3o"%(N - i_idx))
-            self.sinks_dict["%3.3o"%(N+1) + '_' + "%3.3o"%(N - i_idx)] = target_sink
+            target_sink.set_name("00%i"%(N+1) + '_' + "00%i"%(N - i_idx))
+            self.sinks_dict["00%i"%(N+1) + '_' + "00%i"%(N - i_idx)] = target_sink
 
             target_sink = sinks[3][i_idx]
             target_intersection = intersections[N - 1 - i_idx][0]
             self.connect(target_sink, 0, target_intersection, 0)
-            target_sink.set_name("%3.3o"%(N - i_idx) + '_' + "000")
-            self.sinks_dict["%3.3o"%(N - i_idx) + '_' + "000"] = target_sink
+            target_sink.set_name("00%i"%(N - i_idx) + '_' + "000")
+            self.sinks_dict["00%i"%(N - i_idx) + '_' + "000"] = target_sink
 
         self.compile()
 

@@ -49,11 +49,11 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
 
     # round robbin x 5 times
     iteration_num = int(sys.argv[2])
+    choose_car_mode = int(sys.argv[1])
     for _ in range(iteration_num):
         total_cost = 0
         path_diff_count = 0
 
-        choose_car_mode = int(sys.argv[1])
         cars_for_threads, chosen_cars_list = my_net.choose_car(all_cars_dict, handle_car_dict, new_car_list, choose_car_mode)
 
         # Record which cars are been routed
