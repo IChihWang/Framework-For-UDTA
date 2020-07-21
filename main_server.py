@@ -89,8 +89,11 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
         #print(path_diff_count)
         #print("=============", total_cost/car_num)
 
-
-        #my_net.get_car_time_space_list(car_list);
+        '''
+        if (len(all_cars_dict.values()) > 10):
+            my_net.get_car_time_space_list(all_cars_dict.values());
+            exit()
+        '''
 
     return route_car_id_dict
 
