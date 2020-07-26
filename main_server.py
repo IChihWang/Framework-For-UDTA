@@ -30,13 +30,24 @@ import traceback
 random.seed(0)
 np.random.seed(0)
 
+update_lock = threading.Lock()
 
 def worker(my_net, cars):
     # My_net is read-only
 
-    for car in cars:
-        #print(car.id)
-        my_net.dijkstra(car, car.src_node, car.dst_node, car.time_offset)
+        for car in cars:
+            #print(car.id)
+            my_net.dijkstra(car, car.src_node, car.dst_node, car.time_offset)
+
+            '''
+            update_lock.acquire()
+            my_net.update_map(car)
+            try:
+                update_lock.release()
+            finally:
+                pass
+            #'''    
+                
 
 def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
 
@@ -49,11 +60,11 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
 
     # round robbin x 5 times
     iteration_num = int(sys.argv[2])
-    choose_car_mode = int(sys.argv[1])
     for _ in range(iteration_num):
         total_cost = 0
         path_diff_count = 0
 
+        choose_car_mode = int(sys.argv[1])
         cars_for_threads, chosen_cars_list = my_net.choose_car(all_cars_dict, handle_car_dict, new_car_list, choose_car_mode)
 
         # Record which cars are been routed
@@ -75,6 +86,7 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
         for thread in threads:
             thread.join()
 
+	'''
         for car in chosen_cars_list:
             my_net.update_map(car)
 
@@ -85,22 +97,20 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
                 path_diff_count += 1
 
             sys.stdout.flush()
+	'''
 
         #print(path_diff_count)
         #print("=============", total_cost/car_num)
 
-        '''
-        if (len(all_cars_dict.values()) > 10):
-            my_net.get_car_time_space_list(all_cars_dict.values());
-            exit()
-        '''
+
+        #my_net.get_car_time_space_list(car_list);
 
     return route_car_id_dict
 
 def SUMO_Handler(sock):
 
     hello_msg = sock.recv(1024).split(":")
-
+    print(hello_msg)
     grid_size = int(hello_msg[1])
     scheduling_period = int(hello_msg[3])
     routing_period = int(hello_msg[5])
@@ -247,6 +257,7 @@ def SUMO_Handler(sock):
 
         sys.stdout.flush()
 
+    compute_time_list = compute_time_list
     average_computation_time = sum(compute_time_list)/len(compute_time_list)
     max_computation_time = max(compute_time_list)
 
