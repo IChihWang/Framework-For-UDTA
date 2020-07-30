@@ -265,6 +265,7 @@ class MiniVnet:
                 cars_for_threads.append([])
             chosen_cars += new_car
             cars_for_threads.append(chosen_cars)
+            del new_car[:]
         elif choose_car_mode == 3:
             # Only for one thread
             for _ in range(self.thread_num-1):

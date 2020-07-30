@@ -39,7 +39,7 @@ def worker(my_net, cars):
             #print(car.id)
             my_net.dijkstra(car, car.src_node, car.dst_node, car.time_offset)
 
-            '''
+            #'''
             update_lock.acquire()
             my_net.update_map(car)
             try:
