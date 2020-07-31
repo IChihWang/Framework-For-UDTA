@@ -26,13 +26,15 @@ import global_val
 import csv
 
 import traceback
+import multiprocessing
+from multiprocessing import Manager, Value
 
 random.seed(0)
 np.random.seed(0)
-
+sys.setrecursionlimit(100000)
 update_lock = threading.Lock()
 
-def worker(my_net, cars):
+def worker(my_net, cars, return_dict):
     # My_net is read-only
 
         for car in cars:
@@ -46,8 +48,8 @@ def worker(my_net, cars):
                 update_lock.release()
             finally:
                 pass
-            #'''    
-                
+            return_dict[car.id] = car
+
 
 def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
 
@@ -74,30 +76,41 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
 
         threads = []
 
+        manager = multiprocessing.Manager()
+        return_dict = [manager.dict() for idx in range(thread_num)]
 
         for thread_idx in range(thread_num):
             if thread_idx >= len(cars_for_threads):
                 break
 
-            t = threading.Thread(target=worker, args=(my_net, cars_for_threads[thread_idx],))
+            '''
+            return_dict = dict()
+            t = threading.Thread(target=worker, args=(my_net, cars_for_threads[thread_idx],route_car_id_dict))
+            #'''
+            t = multiprocessing.Process(target=worker, args=(my_net, cars_for_threads[thread_idx],return_dict[thread_idx],))
             threads.append(t)
             t.start()
 
         for thread in threads:
             thread.join()
 
-	'''
-        for car in chosen_cars_list:
-            my_net.update_map(car)
+        for thread_idx in range(thread_num):
+            for car_id, car in return_dict[thread_idx].items():
+                route_car_id_dict[car_id] = car
 
-            saved_path = car.path_node
+	#'''
+        for thread_idx in range(thread_num):
+            for car_id, car in return_dict[thread_idx].items():
+                my_net.update_map(car)
 
-            total_cost += car.traveling_time
-            if saved_path != car.path_node and saved_path != []:
-                path_diff_count += 1
+                #saved_path = car.path_node
 
-            sys.stdout.flush()
-	'''
+                #total_cost += car.traveling_time
+                #if saved_path != car.path_node and saved_path != []:
+                #    path_diff_count += 1
+
+                sys.stdout.flush()
+	#'''
 
         #print(path_diff_count)
         #print("=============", total_cost/car_num)
