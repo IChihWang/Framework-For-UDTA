@@ -31,7 +31,7 @@ from multiprocessing import Manager, Value
 
 random.seed(0)
 np.random.seed(0)
-sys.setrecursionlimit(100000)
+sys.setrecursionlimit(50000)
 update_lock = threading.Lock()
 
 def worker(my_net, cars, return_dict):
@@ -48,6 +48,8 @@ def worker(my_net, cars, return_dict):
                 update_lock.release()
             finally:
                 pass
+
+            #'''
             return_dict[car.id] = car
 
 
@@ -94,14 +96,12 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
         for thread in threads:
             thread.join()
 
-        for thread_idx in range(thread_num):
-            for car_id, car in return_dict[thread_idx].items():
-                route_car_id_dict[car_id] = car
 
 	#'''
         for thread_idx in range(thread_num):
-            for car_id, car in return_dict[thread_idx].items():
+            for car in return_dict[thread_idx].values():
                 my_net.update_map(car)
+                route_car_id_dict[car.id] = car
 
                 #saved_path = car.path_node
 
