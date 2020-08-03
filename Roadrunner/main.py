@@ -132,7 +132,7 @@ if __name__ == "__main__":
         sumoBinary = checkBinary('sumo-gui')
 
     # 0. Generate the intersection information files
-    os.system("bash gen_intersection/gen_data.sh " + str(cfg.LANE_NUM_PER_DIRECTION))
+    #os.system("bash gen_intersection/gen_data.sh " + str(cfg.LANE_NUM_PER_DIRECTION))
 
     # 1. Generate the route file for this simulation
     arrival_rate = float(sys.argv[1])

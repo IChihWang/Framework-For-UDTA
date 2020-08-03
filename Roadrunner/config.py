@@ -1,5 +1,4 @@
 import sys
-sys.path.append('D:\Google Drive\NYU\V2X\UDTA\MiniVnet')
 import global_val
 
 LANE_NUM_PER_DIRECTION = global_val.LANE_NUM_PER_DIRECTION

@@ -28,29 +28,41 @@ import csv
 import traceback
 import multiprocessing
 from multiprocessing import Manager, Value
+import logging
 
 random.seed(0)
 np.random.seed(0)
 sys.setrecursionlimit(50000)
 update_lock = threading.Lock()
 
-def worker(my_net, cars, return_dict):
+def worker(my_net, cars, return_dict, local_lock):
     # My_net is read-only
 
-        for car in cars:
-            #print(car.id)
-            my_net.dijkstra(car, car.src_node, car.dst_node, car.time_offset)
+    logging.info("in worker  1")
+    for car in cars:
+        #print(car.id)
+        my_net.dijkstra(car, car.src_node, car.dst_node, car.time_offset)
 
-            #'''
-            update_lock.acquire()
-            my_net.update_map(car)
+        #'''
+        my_net.update_map(car)
+
+    try:
+        logging.info("in worker  2")
+        local_lock.acquire()
+        logging.info("in worker  3")
+        for car in cars:
             try:
-                update_lock.release()
+                return_dict[car.id] = car
             finally:
                 pass
+        logging.info("in worker  4")
+    except Exception as e:
+        traceback.print_exc()
 
-            #'''
-            return_dict[car.id] = car
+
+    local_lock.release()
+    logging.info("in worker  5")
+
 
 
 def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
@@ -58,11 +70,13 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
     new_car_list = list(new_car.values())
 
     route_car_id_dict = dict()
+    repeat_time_measure = 0
 
-    #car_num_per_thread = len(car_list)//thread_num+1
+    manager = multiprocessing.Manager()
+    lock = multiprocessing.Lock()
+    logging.basicConfig(level=logging.INFO)
 
-
-    # round robbin x 5 times
+    # round robbin x R times
     iteration_num = int(sys.argv[2])
     for _ in range(iteration_num):
         total_cost = 0
@@ -76,40 +90,71 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
             if car.id not in route_car_id_dict:
                 route_car_id_dict[car.id] = car
 
-        threads = []
 
-        manager = multiprocessing.Manager()
-        return_dict = [manager.dict() for idx in range(thread_num)]
+        is_repeat = True
+        while is_repeat: # in case multi-precess fail
+            threads = []
+            TiStamp1 = time.time()
+            is_repeat = False
 
-        for thread_idx in range(thread_num):
-            if thread_idx >= len(cars_for_threads):
-                break
+            try:
+                #return_dict = [manager.dict() for idx in range(thread_num)]
+                return_dict = manager.dict()
+                print("=== 0")
+                for thread_idx in range(thread_num):
+                    if thread_idx >= len(cars_for_threads):
+                        break
 
-            '''
-            return_dict = dict()
-            t = threading.Thread(target=worker, args=(my_net, cars_for_threads[thread_idx],route_car_id_dict))
-            #'''
-            t = multiprocessing.Process(target=worker, args=(my_net, cars_for_threads[thread_idx],return_dict[thread_idx],))
-            threads.append(t)
-            t.start()
+                    '''
+                    return_dict = dict()
+                    t = threading.Thread(target=worker, args=(my_net, cars_for_threads[thread_idx],route_car_id_dict))
+                    #'''
+                    t = multiprocessing.Process(target=worker, args=(my_net, cars_for_threads[thread_idx],return_dict,lock,))
+                    threads.append(t)
 
-        for thread in threads:
-            thread.join()
+                    t.start()
+
+                print("=== 1")
+                for thread in threads:
+                    thread.join()
+                print("=== 2")
 
 
-	#'''
-        for thread_idx in range(thread_num):
-            for car in return_dict[thread_idx].values():
+        	    #'''
+                to_update_car = []
+                print(len(return_dict))
+                for car in return_dict.values():
+                    to_update_car.append(car)
+                    #saved_path = car.path_node
+
+                    #total_cost += car.traveling_time
+                    #if saved_path != car.path_node and saved_path != []:
+                    #    path_diff_count += 1
+                print("=== 3")
+            except Exception as e:
+                traceback.print_exc()
+                manager = multiprocessing.Manager()
+                lock = multiprocessing.Lock()
+                is_repeat = True
+
+            try:
+                for process in threads:
+                    process.terminate()
+                del threads[:]
+                #del manager
+            except Exception as e:
+                traceback.print_exc()
+                pass
+
+            TiStamp2 = time.time()
+
+            if is_repeat:
+                # Skip update and repeat the routing
+                repeat_time_measure += TiStamp2-TiStamp1
+                continue
+            for car in to_update_car:
                 my_net.update_map(car)
                 route_car_id_dict[car.id] = car
-
-                #saved_path = car.path_node
-
-                #total_cost += car.traveling_time
-                #if saved_path != car.path_node and saved_path != []:
-                #    path_diff_count += 1
-
-                sys.stdout.flush()
 	#'''
 
         #print(path_diff_count)
@@ -118,7 +163,7 @@ def handle_routing(my_net, all_cars_dict, handle_car_dict, new_car, thread_num):
 
         #my_net.get_car_time_space_list(car_list);
 
-    return route_car_id_dict
+    return route_car_id_dict, repeat_time_measure
 
 def SUMO_Handler(sock):
 
@@ -218,7 +263,7 @@ def SUMO_Handler(sock):
                     car.is_src_sink = False
 
         # Handle the route
-        route_car_id_dict = handle_routing(my_net, all_cars_dict, handle_cars_dict, new_car_dict, thread_num)
+        route_car_id_dict, repeat_time_measure = handle_routing(my_net, all_cars_dict, handle_cars_dict, new_car_dict, thread_num)
 
 
         # Construct message
@@ -256,9 +301,13 @@ def SUMO_Handler(sock):
         server_send_str += "@"
 
 
-        computation_time = time.time() - TiStamp1
-        print(time.time() - TiStamp1, "sec")
-        compute_time_list.append(computation_time)
+        computation_time = time.time() - TiStamp1 - repeat_time_measure
+        print(computation_time, "sec")
+        if repeat_time_measure == 0:
+            # Not recording the computation time caused by system multiprocessing issue
+            compute_time_list.append(computation_time)
+        else:
+            print("Skip time record")
 
 
         #print("snd: ", server_send_str)
