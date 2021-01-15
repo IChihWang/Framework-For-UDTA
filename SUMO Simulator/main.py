@@ -354,6 +354,7 @@ def get_options():
 # Main function
 if __name__ == "__main__":
     print("Usage: python code.py <arrival_rate (0~1.0)> <seed> <grid size>")
+    print("Example: python code.py 0.5 0 2 0 2 5 5")
     sys.argv[7]
 
     cfg.INTER_SIZE = int(sys.argv[3])
@@ -371,7 +372,7 @@ if __name__ == "__main__":
     options = get_options()
 
     # this script has been called from the command line. It will start sumo as a server, then connect and run
-    sumoBinary = checkBinary('sumo')
+    sumoBinary = checkBinary('sumo-gui')
 
     # 0. Generate the intersection information files
     #os.system("bash gen_intersection/gen_data.sh " + str(cfg.LANE_NUM_PER_DIRECTION))

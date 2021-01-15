@@ -13,7 +13,7 @@ import global_val
 
 class IntersectionManager:
     def __init__(self, my_id):
-        self.ID = id
+        self.ID = my_id
         self.az_list = dict()
         self.pz_list = dict()
         self.ccz_list = dict()
@@ -115,10 +115,11 @@ class IntersectionManager:
                 sched_car.append(car)
 
 
+        '''
         # Check whether there is a spillback
         accumulate_car_len_lane = [0]*(4*cfg.LANE_NUM_PER_DIRECTION)
         spillback_lane_advise_avoid = [False]*(4*cfg.LANE_NUM_PER_DIRECTION)
-        #'''
+
         for car_id, car in self.car_list.items():
             lane_idx = car.dst_lane
             #print(lane_idx)
@@ -131,7 +132,7 @@ class IntersectionManager:
             if self.others_road_info[lane_idx] != None:
                 if accumulate_car_len_lane[lane_idx] >= self.others_road_info[lane_idx]['avail_len']:
                     spillback_lane_advise_avoid[lane_idx] = True
-
+        '''
 
         # Update the table for the lane advising
         self.lane_advisor.updateTableFromCars(sched_car, advised_n_sched_car)
@@ -143,10 +144,10 @@ class IntersectionManager:
 
             # Line advise
             if len(sched_car) == 0 and len(n_sched_car) == 1:
-                advised_lane = self.lane_advisor.adviseLaneFast(target_car, spillback_lane_advise_avoid)
+                advised_lane = self.lane_advisor.adviseLaneFast(target_car)
                 target_car.lane = advised_lane
             else:
-                advised_lane = self.lane_advisor.adviseLane(target_car, spillback_lane_advise_avoid)
+                advised_lane = self.lane_advisor.adviseLane(target_car)
                 target_car.lane = advised_lane
 
             # Reset the delays
@@ -162,7 +163,8 @@ class IntersectionManager:
                     delay_results[target_car.id] = 0.012458170110189348     # Decelerate for turning
             else:
 
-                delay_results = Roadrunner(sched_car, n_sched_car, delay_list, OT_list, self.others_road_info, self.spillback_delay_record)
+                #delay_results = Roadrunner(sched_car, n_sched_car, delay_list, OT_list, self.others_road_info, self.spillback_delay_record)
+                delay_results = Roadrunner(sched_car, n_sched_car, delay_list, OT_list)
 
             turning_delay[turning] = delay_results
             lane_results[turning] = target_car.lane

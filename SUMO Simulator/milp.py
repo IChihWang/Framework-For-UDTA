@@ -3,6 +3,7 @@ from get_inter_info import Data
 from ortools.linear_solver import pywraplp
 import config as cfg
 import copy
+import numpy
 
 
 data = Data()

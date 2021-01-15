@@ -50,6 +50,9 @@ class Intersection:
 
                 self.links.append(new_link)
 
+    def connect_intersection(self, my_direction, intersection, its_direction):
+        self.intersection_manager.connect(my_direction, intersection.intersection_manager, its_direction)
+
     def connect(self, index, road):
         assert self.components[
                    index] == None, "Two components are assigned to the same entry of the intersection: " + str(

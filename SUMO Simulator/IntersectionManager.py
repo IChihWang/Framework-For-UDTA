@@ -11,6 +11,8 @@ from milp import Icacc, IcaccPlus, Fcfs, FixedSignal
 from LaneAdviser import LaneAdviser
 from get_inter_length_info import Data
 
+import copy
+
 inter_length_data = Data()
 
 
@@ -406,17 +408,18 @@ class IntersectionManager:
 
                 lane_sub_idx = (cfg.LANE_NUM_PER_DIRECTION-lane%cfg.LANE_NUM_PER_DIRECTION-1)
 
-                TODO: set out lane based on the path
-                '''
+
                 out_sub_lane = (cfg.LANE_NUM_PER_DIRECTION-lane%cfg.LANE_NUM_PER_DIRECTION-1)
 
+                '''  Route may change, so it's hard to know the next turning
                 if car.ID[1] == 'R':
                     out_sub_lane = 0
                 elif car.ID[1] == 'L':
                     out_sub_lane = cfg.LANE_NUM_PER_DIRECTION-1
+                '''
 
                 car.dst_lane = int(car.out_dir*cfg.LANE_NUM_PER_DIRECTION + out_sub_lane)
-                '''
+
 
                 # Stay on its lane
                 traci.vehicle.changeLane(car_id, lane_sub_idx, 1.0)
@@ -461,9 +464,9 @@ class IntersectionManager:
                 self.az_list[car_id] = car
 
                 traci.vehicle.setMinGap(car_id, cfg.HEADWAY)
-                traci.vehicle.setLaneChangeMode(car_id, 784)
+                traci.vehicle.setLaneChangeMode(car_id, 548)
 
-                time_in_AZ = 9999.91
+                time_in_AZ = cfg.AZ_LEN/cfg.MAX_SPEED *3
 
 
                 #advised_lane = self.lane_advisor.adviseLaneShortestTrajectory(car)

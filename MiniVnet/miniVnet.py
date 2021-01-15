@@ -59,15 +59,15 @@ class MiniVnet:
     def createGridNetwork(self, N, num_lane):
         intersections = [[self.addIntersection("00%i"%(i) + '_' + "00%i"%(j), num_lane) for j in range(1,N+1)] for i in
                          range(1,N+1)]
+        '''
+        for idx in range(0, N):
+            for jdx in range(0, N):
+                if idx <= N-2:
+                    intersections[idx][jdx].connect_intersection(1, intersections[idx+1][jdx], 3)
 
-        for idx in range(1, N+1):
-            for jdx in range(1, N+1):
-                if idx <= N-1:
-                    intersections[idx][jdx].connect(1, intersections[idx+1][jdx], 3)
-
-                if jdx <= N-1:
-                    intersections[idx][jdx].connect(2, intersections[idx][jdx+1], 0)
-
+                if jdx <= N-2:
+                    intersections[idx][jdx].connect_intersection(2, intersections[idx][jdx+1], 0)
+        '''
 
         for i in range(N):
             for j in range(N):

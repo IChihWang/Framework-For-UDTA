@@ -336,6 +336,7 @@ def SUMO_Handler(sock):
 if __name__ == '__main__':
     print("Usage: python code.py <choose_car_algorithm> <iteration_num> <thread_num> <Top N number>")
     print("--------------------- <arrival_rate> <rand_seed> <grid_size>")
+    print("Example: python code.py 0 2 5 5 0.5 0 2")
     sys.argv[4]
     sys.argv[7]
 

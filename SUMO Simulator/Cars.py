@@ -32,6 +32,15 @@ class Car:
         self.length = length
         self.turning = turning
 
+        self.in_dir = lane // cfg.LANE_NUM_PER_DIRECTION
+        self.out_dir = None
+        if turning == 'S':
+            self.out_dir = (self.in_dir+2)%4
+        elif turning == 'R':
+            self.out_dir = (self.in_dir+1)%4
+        elif turning == 'L':
+            self.out_dir = (self.in_dir-1)%4
+
         # Determine the speed in the intersection
         speed_in_intersection = cfg.TURN_SPEED
         if turning == "S":
@@ -48,6 +57,15 @@ class Car:
         self.original_lane = lane   # The lane when the car joined the system
         self.lane = lane
         self.desired_lane = lane
+        self.is_spillback = False
+
+        out_sub_lane = (cfg.LANE_NUM_PER_DIRECTION-lane%cfg.LANE_NUM_PER_DIRECTION-1)
+        if turning == 'R':
+            out_sub_lane = 0
+        elif turning == 'L':
+            out_sub_lane = cfg.LANE_NUM_PER_DIRECTION-1
+        self.dst_lane = int(self.out_dir*cfg.LANE_NUM_PER_DIRECTION + out_sub_lane)
+
 
         # Position: how far between it and the intersection (0 at the entry of intersection)
         self.position = cfg.AZ_LEN + cfg.PZ_LEN + cfg.GZ_LEN+ cfg.BZ_LEN + cfg.CCZ_LEN
